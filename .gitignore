@@ -1,7 +1,12 @@
+# Python / Django
+venv/
 .env
-*.env
-# Default ignored files
-/shelf/
-/workspace.xml
-# Editor-based HTTP Client requests
-/httpRequests/".env" 
+__pycache__/
+*.pyc
+
+# IDE
+*.idea
+.vscode
+
+# Log files
+*.log
