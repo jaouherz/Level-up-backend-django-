@@ -1,14 +1,44 @@
-# Python / Django
-venv/
-.env
+# ======================
+# PYTHON / DJANGO
+# ======================
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg-info/
+db.sqlite3
 
-# IDE
-*.idea
-.vscode
+# ======================
+# ENVIRONMENT / SECRETS
+# ======================
+.env
+*.env
 
-# Log files
-*.log"db.sqlite3" 
-".idea/" 
-"__pycache__/" 
+# ======================
+# IDE / EDITOR
+# ======================
+.idea/
+.vscode/
+*.iml
+
+# ======================
+# ML FILES / DATASETS
+# ======================
+*.pkl
+*.joblib
+*.csv
+training_dataset.csv
+
+# ======================
+# LOGS / TEMP
+# ======================
+*.log
+*.tmp
+
+# ======================
+# DO NOT IGNORE YOUR PROJECT FILES
+# ======================
+!/backend/
+!/api/
+!/manage.py
