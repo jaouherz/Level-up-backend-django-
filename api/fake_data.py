@@ -1,24 +1,37 @@
 from django.contrib.auth.models import User
 from api.models import Skill, University, Offer, Profile, Application, Certification
-from django.db import transaction
+from django.db import connection
 import random
 import string
 from time import time
+from collections import Counter
+
+# ==============================================================
+# 🔸 Utility
+# ==============================================================
 
 def random_username(i):
     return f"user_{i}_{''.join(random.choices(string.ascii_lowercase, k=5))}"
 
-@transaction.atomic
+
+# ==============================================================
+# 🧹 Main Seeder
+# ==============================================================
+
 def run():
     start = time()
     print("🧹 Clearing old data...")
-    Application.objects.all().delete()
-    Offer.objects.all().delete()
-    Profile.objects.all().delete()
-    University.objects.all().delete()
-    Skill.objects.all().delete()
-    Certification.objects.all().delete()
-    User.objects.exclude(is_superuser=True).delete()
+    Application.objects.all()._raw_delete(using=connection.alias)
+    # Clear M2M relations explicitly before Offer
+    Offer.required_skills.through.objects.all()._raw_delete(using=connection.alias)
+    Offer.objects.all()._raw_delete(using=connection.alias)
+    Profile.skills.through.objects.all()._raw_delete(using=connection.alias)
+    Profile.certifications.through.objects.all()._raw_delete(using=connection.alias)
+    Profile.objects.all()._raw_delete(using=connection.alias)
+    University.objects.all()._raw_delete(using=connection.alias)
+    Skill.objects.all()._raw_delete(using=connection.alias)
+    Certification.objects.all()._raw_delete(using=connection.alias)
+    User.objects.exclude(is_superuser=True)._raw_delete(using=connection.alias)
 
     # ---- skills ----
     print("⚙️ Creating skills...")
@@ -34,6 +47,11 @@ def run():
         "TensorFlow Developer", "Linux Foundation Certified"
     ]
     certs = [Certification.objects.create(name=c) for c in cert_names]
+
+    # ---- auto link certs to skills (Groq logic integrated)
+    print("🤖 Linking certs to skills...")
+    from api.cert_skill_auto_link import auto_link_certifications
+    auto_link_certifications()
 
     # ---- university ----
     uni = University.objects.create(
@@ -70,7 +88,7 @@ def run():
     Profile.objects.bulk_create(profiles, batch_size=2000)
 
     # ---- assign random skills ----
-    print("🔗 Assigning skills...")
+    print("🔗 Assigning skills to students...")
     all_profiles = list(Profile.objects.filter(role="student").values_list("id", flat=True))
     through_model = Profile.skills.through
     m2m = []
@@ -80,7 +98,7 @@ def run():
     through_model.objects.bulk_create(m2m, batch_size=5000)
 
     # ---- assign certifications ----
-    print("🎖 Assigning certifications...")
+    print("🎖 Assigning certifications to students...")
     cert_through = Profile.certifications.through
     m2m_cert = []
     for pid in all_profiles:
@@ -107,11 +125,10 @@ def run():
     for o in offers:
         o.required_skills.set(random.sample(skills, random.randint(2, 4)))
 
-    # ---- applications with realistic statuses ----
-    # ---- applications with realistic statuses ----
+    # ---- applications ----
     print("📨 Creating applications...")
     applications = []
-    for prof in Profile.objects.filter(role="student")[:25000]:
+    for prof in Profile.objects.filter(role="student").iterator(chunk_size=5000):
         student_skills = set(prof.skills.values_list("id", flat=True))
         student_certs = prof.certifications.count()
         for offer in random.sample(offers, random.randint(1, 5)):
@@ -119,41 +136,35 @@ def run():
             if not offer_skills:
                 continue
 
-            # calculate realistic fit score
+            # Calculate fit
             skill_ratio = len(student_skills & offer_skills) / len(offer_skills)
             gpa_score = float(prof.gpa or 0) / 4.0
             score_norm = float(prof.score or 0) / 400.0
-            cert_bonus = min(student_certs * 0.05, 0.2)  # cap at +0.2
+            cert_bonus = min(student_certs * 0.05, 0.2)
 
-            # combined weighted score
             fit_score = (
-                    0.5 * skill_ratio +
-                    0.25 * gpa_score +
-                    0.15 * score_norm +
-                    0.1 * cert_bonus
+                0.35 * skill_ratio +
+                0.25 * gpa_score +
+                0.25 * score_norm +
+                0.15 * cert_bonus
             )
 
-            # --- NEW realism tweaks ---
-            # Add slight randomness (±0.15)
-            fit_score += random.uniform(-0.15, 0.15)
-
-            # Add company bias (some companies stricter)
-            company_bias = random.uniform(-0.05, 0.05)
-            fit_score += company_bias
-
-            # Clamp between 0–1
+            fit_score += random.uniform(-0.25, 0.25)
+            fit_score += random.uniform(-0.1, 0.1)
             fit_score = max(0, min(fit_score, 1))
 
-            # Status thresholds
+            # Assign status
             if fit_score > 0.7:
-                status = "accepted"
+                status = random.choices(["accepted", "rejected"], weights=[0.8, 0.2])[0]
             elif fit_score > 0.4:
-                status = "pending"
+                status = random.choices(["accepted", "pending", "rejected"], weights=[0.4, 0.3, 0.3])[0]
             else:
-                status = "rejected"
+                status = random.choices(["rejected", "accepted"], weights=[0.8, 0.2])[0]
 
             applications.append(Application(user=prof.user, offer=offer, status=status))
 
+    print(f"🧮 Total applications to insert: {len(applications)}")
     Application.objects.bulk_create(applications, batch_size=5000)
-    print(f"✅ {len(applications)} applications inserted.")
-    print(f"🎉 Done in {round(time()-start,2)}s")
+
+    print(f"✅ Done in {round(time() - start, 2)}s")
+    print("📊 Status distribution:", Counter([a.status for a in applications]))
