@@ -1,0 +1,17 @@
+version: "3.9"
+
+services:
+  django:
+    build: .
+    container_name: django_backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+      - sqlite_db:/app/db
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+
+volumes:
+  sqlite_db:
