@@ -27,5 +27,5 @@ spec:
       volumes:
         - name: code
           hostPath:
-            path: /path/to/your/project
+            path: /mnt/levelup
             type: Directory
