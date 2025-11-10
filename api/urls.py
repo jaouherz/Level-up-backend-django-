@@ -3,7 +3,7 @@ from rest_framework.routers import DefaultRouter
 from api.views import (
     ApplicationViewSet, ProfileViewSet, OfferViewSet, ranked_candidates,
     CertificationViewSet, UniversityViewSet, ScoreHistoryViewSet,
-    replace_fakes_api, FeedbackViewSet, RegisterView
+    replace_fakes_api, FeedbackViewSet, RegisterView, EmailTokenObtainPairView
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
@@ -23,6 +23,6 @@ urlpatterns = [
     path('offers/<int:offer_id>/replace_fakes/', replace_fakes_api),
 
     path("register/", RegisterView.as_view(), name="register"),             # public
-    path("login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),# public
+    path("login/", EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),     # public
 ]

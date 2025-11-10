@@ -8,6 +8,8 @@ from rest_framework import viewsets, status, mixins, permissions
 from rest_framework.decorators import api_view, action, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from api.models import (
     Application, Offer, Profile, Skill, Certification,
@@ -16,7 +18,7 @@ from api.models import (
 from api.serializers import (
     ApplicationSerializer, ProfileSerializer, OfferSerializer,
     SkillSerializer, CertificationSerializer, UniversitySerializer,
-    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, UserSerializer
+    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, UserSerializer, EmailTokenObtainPairSerializer
 )
 from api.ml_utils import predict_fit
 
@@ -365,3 +367,10 @@ class RegisterView(generics.CreateAPIView):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }, status=201)
+class EmailTokenObtainPairView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        serializer = EmailTokenObtainPairSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)

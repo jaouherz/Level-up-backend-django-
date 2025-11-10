@@ -5,7 +5,7 @@ metadata:
   labels:
     app: django
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: django
@@ -17,6 +17,15 @@ spec:
       containers:
         - name: django-container
           image: zouari123/django-backend:latest
-          imagePullPolicy: Always
+          imagePullPolicy: IfNotPresent
+          command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
           ports:
             - containerPort: 8000
+          volumeMounts:
+            - name: code
+              mountPath: /app
+      volumes:
+        - name: code
+          hostPath:
+            path: /path/to/your/project
+            type: Directory
