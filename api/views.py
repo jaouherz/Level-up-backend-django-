@@ -1,9 +1,15 @@
 # api/views.py
 
 from datetime import date, datetime
+
+from django.contrib import messages
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.contrib.auth.models import User
-from django.contrib.auth import get_user_model
+from django.contrib.auth import get_user_model, logout, login
+
+from api.forms import RegisterForm, LoginForm
+
 User = get_user_model()
 from rest_framework import viewsets, status, mixins, permissions
 from rest_framework.decorators import api_view, action, permission_classes
@@ -404,3 +410,33 @@ def pending_users(request):
         } for p in pending
     ]
     return Response(data)
+
+def html_login(request):
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data["user"]
+            login(request, user)
+            messages.success(request, "Welcome back!")
+            return redirect("/")  # or your dashboard URL
+    else:
+        form = LoginForm()
+    return render(request, "api/login.html", {"form": form})
+
+
+def html_register(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Registration successful! You can now log in.")
+            return redirect("html_login")
+    else:
+        form = RegisterForm()
+    return render(request, "api/register.html", {"form": form})
+
+
+def html_logout(request):
+    logout(request)
+    messages.info(request, "You have been logged out.")
+    return redirect("html_login")
