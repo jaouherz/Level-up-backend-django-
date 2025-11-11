@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LevelUp - Home</title>
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: linear-gradient(135deg, #007bff, #00c6ff);
+            color: white;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-top: 40px;
+        }
+
+        p {
+            font-size: 1.2rem;
+            margin: 20px auto;
+            width: 70%;
+        }
+
+        a {
+            color: #ffeb3b;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        footer {
+            margin-top: 60px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h2>Welcome to LevelUp Internship Platform 🚀</h2>
+    </header>
+
+    <main>
+        <h1>Home Page</h1>
+        <p>
+            This is a test homepage to confirm Django is correctly rendering templates.
+            <br><br>
+            Try visiting your <a href="/admin/">Admin Panel</a> or <a href="/api/">API Routes</a>.
+        </p>
+    </main>
+
+    <footer>
+        &copy; {{ year|default:"2025" }} LevelUp Project | Built with ❤️ using Django
+    </footer>
+</body>
+</html>

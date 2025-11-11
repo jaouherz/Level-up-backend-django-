@@ -5,6 +5,9 @@ from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.auth import get_user_model, logout, login
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_exempt
+from django.views.generic import TemplateView
 
 from api.forms import RegisterForm, LoginForm
 
@@ -377,6 +380,7 @@ class RegisterView(generics.CreateAPIView):
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }, status=201)
+@method_decorator(csrf_exempt, name='dispatch')
 class EmailTokenObtainPairView(APIView):
     permission_classes = [permissions.AllowAny]
 
@@ -409,18 +413,8 @@ def pending_users(request):
     ]
     return Response(data)
 
-def html_login(request):
-    if request.method == "POST":
-        form = LoginForm(request.POST)
-        if form.is_valid():
-            user = form.cleaned_data["user"]
-            login(request, user)
-            messages.success(request, "Welcome back!")
-            return redirect("/")  # or your dashboard URL
-    else:
-        form = LoginForm()
-    return render(request, "api/login.html", {"form": form})
-
+def html_jwt_login(request):
+    return render(request, "api/login.html")
 
 def html_register(request):
     if request.method == "POST":
@@ -436,5 +430,14 @@ def html_register(request):
 
 def html_logout(request):
     logout(request)
+    request.session.flush()
     messages.info(request, "You have been logged out.")
     return redirect("html_login")
+
+class HomeView(TemplateView):
+    template_name = "api/home.html"
+def html_jwt_login(request):
+    return render(request, "api/login.html")
+
+def html_jwt_register(request):
+    return render(request, "api/register.html")

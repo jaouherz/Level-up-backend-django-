@@ -1,12 +1,12 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenRefreshView
 from api.views import (
-    ApplicationViewSet,ProfileViewSet, OfferViewSet, ranked_candidates,
+    ApplicationViewSet, ProfileViewSet, OfferViewSet, ranked_candidates,
     CertificationViewSet, UniversityViewSet, ScoreHistoryViewSet,
     replace_fakes_api, FeedbackViewSet, RegisterView, EmailTokenObtainPairView,
-    approve_user, pending_users
+    approve_user, pending_users, html_jwt_login, html_jwt_register
 )
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 router = DefaultRouter()
 router.register(r'applications', ApplicationViewSet, basename='applications')
@@ -19,13 +19,17 @@ router.register(r'feedbacks', FeedbackViewSet, basename='feedbacks')
 
 urlpatterns = [
     path('', include(router.urls)),
-
     path('offers/<int:offer_id>/ranked_candidates/', ranked_candidates),
     path('offers/<int:offer_id>/replace_fakes/', replace_fakes_api),
-    path("approve-user/<int:user_id>/", approve_user, name="approve_user"),
-    path("pending-users/", pending_users, name="pending_users"),
+    path("approve-user/<int:user_id>/", approve_user),
+    path("pending-users/", pending_users),
 
-    path("register/", RegisterView.as_view(), name="register"),             # public
+    # JWT API endpoints
+    path("register/", RegisterView.as_view(), name="register"),
     path("login/", EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
-    path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),     # public
+    path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+
+    # HTML pages
+    path("auth/jwt-login/", html_jwt_login, name="html_jwt_login"),
+    path("auth/jwt-register/", html_jwt_register, name="html_jwt_register"),
 ]

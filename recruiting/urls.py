@@ -20,5 +20,5 @@ urlpatterns = [
 
     # Feedback on an application
     path("applications/<int:app_id>/feedback/new/", views.feedback_create, name="feedback_create"),
-    path('', TemplateView.as_view(template_name="home.html"), name="home"),
+    path('', TemplateView.as_view(template_name="api/home.html"), name="home"),
 ]

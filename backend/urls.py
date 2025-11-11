@@ -22,5 +22,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('api.urls')),
     path('rh/', include('recruiting.urls')),
-    path('', TemplateView.as_view(template_name="home.html"), name="home"),
+    path('', TemplateView.as_view(template_name='api/home.html'), name='home'),
+
 ]
