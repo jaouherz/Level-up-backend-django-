@@ -44,8 +44,12 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'corsheaders',
     'api',
+    'recruiting',
 ]
-
+AUTH_USER_MODEL = 'api.User'
+LOGIN_URL = '/api/login/'
+LOGOUT_REDIRECT_URL = '/api/login/'
+LOGIN_REDIRECT_URL = '/'
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware', 
     'django.middleware.security.SecurityMiddleware',
@@ -62,7 +66,7 @@ ROOT_URLCONF = 'backend.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / "api" / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

@@ -1,10 +1,17 @@
 from datetime import date, datetime
+
+from django.contrib import messages
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model, logout, login
 
+from api.forms import RegisterForm, LoginForm
+
+User = get_user_model()
 from rest_framework import viewsets, status, mixins, permissions
 from rest_framework.decorators import api_view, action, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny , IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
@@ -16,7 +23,7 @@ from api.models import (
 from api.serializers import (
     ApplicationSerializer, ProfileSerializer, OfferSerializer,
     SkillSerializer, CertificationSerializer, UniversitySerializer,
-    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, UserSerializer, EmailTokenObtainPairSerializer
+    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, EmailTokenObtainPairSerializer
 )
 from api.ml_utils import predict_fit
 
@@ -361,7 +368,12 @@ class RegisterView(generics.CreateAPIView):
         user = serializer.save()
         refresh = RefreshToken.for_user(user)
         return Response({
-            "user": UserSerializer(user).data,
+            "user": {
+                "id": user.id,
+                "email": user.email,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+            },
             "refresh": str(refresh),
             "access": str(refresh.access_token),
         }, status=201)
@@ -372,3 +384,57 @@ class EmailTokenObtainPairView(APIView):
         serializer = EmailTokenObtainPairSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         return Response(serializer.validated_data, status=status.HTTP_200_OK)
+@api_view(["POST"])
+@permission_classes([IsAdminUser])
+def approve_user(request, user_id):
+    try:
+        profile = Profile.objects.get(user__id=user_id)
+        profile.is_verified = True
+        profile.save()
+        return Response({"message": f"✅ {profile.user.email} has been approved."})
+    except Profile.DoesNotExist:
+        return Response({"error": "Profile not found."}, status=404)
+
+@api_view(["GET"])
+@permission_classes([IsAdminUser])
+def pending_users(request):
+    pending = Profile.objects.filter(is_verified=False)
+    data = [
+        {
+            "id": p.user.id,
+            "email": p.user.email,
+            "role": p.role,
+            "created": p.user.date_joined
+        } for p in pending
+    ]
+    return Response(data)
+
+def html_login(request):
+    if request.method == "POST":
+        form = LoginForm(request.POST)
+        if form.is_valid():
+            user = form.cleaned_data["user"]
+            login(request, user)
+            messages.success(request, "Welcome back!")
+            return redirect("/")  # or your dashboard URL
+    else:
+        form = LoginForm()
+    return render(request, "api/login.html", {"form": form})
+
+
+def html_register(request):
+    if request.method == "POST":
+        form = RegisterForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Registration successful! You can now log in.")
+            return redirect("html_login")
+    else:
+        form = RegisterForm()
+    return render(request, "api/register.html", {"form": form})
+
+
+def html_logout(request):
+    logout(request)
+    messages.info(request, "You have been logged out.")
+    return redirect("html_login")

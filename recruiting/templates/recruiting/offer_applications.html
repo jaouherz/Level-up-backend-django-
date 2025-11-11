@@ -1,0 +1,43 @@
+{% extends "recruiting/base.html" %}
+{% block title %}Applications — {{ offer.title }}{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Applications — {{ offer.title }} @ {{ offer.company }}</h3>
+  <a class="btn btn-outline-secondary" href="{% url 'recruiting:offer_list' %}">Back</a>
+</div>
+
+<div class="list-group">
+  {% for a in applications %}
+    <div class="list-group-item">
+      <div class="d-flex justify-content-between">
+        <div>
+          <strong>{{ a.user.username }}</strong>
+          <div class="small text-muted">Status: {{ a.get_status_display }} | Fit: {{ a.predicted_fit|default:"—" }}</div>
+        </div>
+        <form method="post" action="{% url 'recruiting:app_update_status' a.id %}" class="d-flex align-items-center gap-2">
+          {% csrf_token %}
+          {{ status_forms.a.id }}
+          <button class="btn btn-sm btn-primary">Update</button>
+        </form>
+      </div>
+
+      <div class="mt-2">
+        <a class="btn btn-sm btn-outline-success" href="{% url 'recruiting:feedback_create' a.id %}">Add Feedback</a>
+      </div>
+
+      {% if a.feedbacks.all %}
+        <div class="mt-2">
+          <div class="fw-semibold">Feedback:</div>
+          <ul class="mb-0">
+          {% for f in a.feedbacks.all %}
+            <li>[{{ f.feedback_type }}] {{ f.comment|default:"(no comment)" }} — <span class="text-muted small">{{ f.created_at }}</span></li>
+          {% endfor %}
+          </ul>
+        </div>
+      {% endif %}
+    </div>
+  {% empty %}
+    <div class="text-muted">No applications yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}

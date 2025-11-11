@@ -1,0 +1,37 @@
+{% extends "recruiting/base.html" %}
+{% block title %}RH Dashboard{% endblock %}
+{% block content %}
+<div class="row g-3">
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <h6 class="text-muted">Total Offers</h6>
+      <h3>{{ total_offers }}</h3>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <h6 class="text-muted">Open Offers</h6>
+      <h3>{{ open_offers }}</h3>
+    </div></div>
+  </div>
+  <div class="col-md-4">
+    <div class="card"><div class="card-body">
+      <h6 class="text-muted">Applications</h6>
+      <h3>{{ total_apps }}</h3>
+    </div></div>
+  </div>
+</div>
+
+<h5 class="mt-4">Recent Offers</h5>
+<div class="list-group">
+  {% for o in offers %}
+    <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+       href="{% url 'recruiting:offer_apps' o.id %}">
+      <span>{{ o.title }} @ {{ o.company }}</span>
+      <span class="badge bg-secondary">{{ o.applications.count }} apps</span>
+    </a>
+  {% empty %}
+    <div class="text-muted">No offers yet.</div>
+  {% endfor %}
+</div>
+{% endblock %}
