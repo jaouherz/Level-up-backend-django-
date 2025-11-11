@@ -117,17 +117,22 @@ class UserSerializer(serializers.ModelSerializer):
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
+    role = serializers.ChoiceField(
+        choices=Profile.ROLE_CHOICES,
+        default="student"
+    )
 
     class Meta:
         model = User
-        fields = ["username", "email", "password", "first_name", "last_name"]
+        fields = ["username", "email", "password", "first_name", "last_name", "role"]
 
     def validate_password(self, value):
         validate_password(value)
         return value
 
     def create(self, validated_data):
-        # ✅ DO NOT manually create a Profile here
+        role = validated_data.pop("role", "student")
+
         user = User.objects.create_user(
             username=validated_data["username"],
             email=validated_data.get("email", ""),
@@ -135,6 +140,18 @@ class RegisterSerializer(serializers.ModelSerializer):
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", "")
         )
+
+        # Ensure a profile exists
+        profile, created = Profile.objects.get_or_create(user=user)
+        profile.role = role
+
+        # Auto-verify students, require admin for others
+        if role == "student":
+            profile.is_verified = True
+        else:
+            profile.is_verified = False  # Recruiters/Universities wait for admin approval
+
+        profile.save()
         return user
 User = get_user_model()
 
@@ -146,17 +163,26 @@ class EmailTokenObtainPairSerializer(serializers.Serializer):
         email = attrs.get("email")
         password = attrs.get("password")
 
-        # ✅ handle duplicates gracefully
+        # ✅ Handle duplicates gracefully
         user = User.objects.filter(email=email).first()
         if not user:
             raise serializers.ValidationError({"detail": "No user with this email."})
 
-        # ✅ authenticate using username under the hood
+        # ✅ Authenticate using username under the hood
         user = authenticate(username=user.username, password=password)
         if not user:
             raise serializers.ValidationError({"detail": "Invalid credentials."})
 
-        # ✅ generate tokens manually
+        # ✅ Check verification status
+        profile = getattr(user, "profile", None)
+        if profile:
+            # If recruiter/university and not verified → block login
+            if profile.role in ["recruiter", "university"] and not profile.is_verified:
+                raise serializers.ValidationError(
+                    {"detail": "Your account is pending admin approval. Please wait until it's verified."}
+                )
+
+        # ✅ Generate tokens manually
         refresh = RefreshToken.for_user(user)
         return {
             "refresh": str(refresh),
@@ -167,5 +193,7 @@ class EmailTokenObtainPairSerializer(serializers.Serializer):
                 "username": user.username,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
+                "role": profile.role if profile else None,
+                "is_verified": profile.is_verified if profile else None,
             }
         }

@@ -73,6 +73,7 @@ class Profile(models.Model):
     gpa = models.DecimalField(max_digits=4, decimal_places=2, null=True, blank=True)
     score = models.IntegerField(default=0)
     notes = models.TextField(blank=True)
+    is_verified = models.BooleanField(default=False)
     skills = models.ManyToManyField(Skill, blank=True, related_name='profiles')
     certifications = models.ManyToManyField(Certification, blank=True, related_name='profiles')
 

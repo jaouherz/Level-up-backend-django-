@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from api.views import (
-    ApplicationViewSet, ProfileViewSet, OfferViewSet, ranked_candidates,
+    ApplicationViewSet,ProfileViewSet, OfferViewSet, ranked_candidates,
     CertificationViewSet, UniversityViewSet, ScoreHistoryViewSet,
     replace_fakes_api, FeedbackViewSet, RegisterView, EmailTokenObtainPairView
 )
