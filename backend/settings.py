@@ -46,7 +46,7 @@ INSTALLED_APPS = [
     'api',
     'recruiting',
 ]
-
+AUTH_USER_MODEL = 'api.User'
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

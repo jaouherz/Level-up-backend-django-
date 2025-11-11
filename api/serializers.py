@@ -1,12 +1,11 @@
 from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from .models import Application, Offer, Profile, Skill, Certification, University, ScoreHistory, Feedback
+User = get_user_model()
 
 
-# ✅ SKILL
 class SkillSerializer(serializers.ModelSerializer):
     class Meta:
         model = Skill
@@ -81,18 +80,19 @@ class ApplicationSerializer(serializers.ModelSerializer):
         model = Application
         fields = ["id", "user", "offer", "status", "predicted_fit"]
 
-
     def get_user(self, obj):
         profile = getattr(obj.user, "profile", None)
+        data = {
+            "id": obj.user.id,
+            "email": obj.user.email,
+        }
         if profile:
-            return {
-                "id": obj.user.id,
-                "username": obj.user.username,
+            data.update({
                 "field_of_study": profile.field_of_study,
                 "gpa": profile.gpa,
                 "score": profile.score
-            }
-        return {"id": obj.user.id, "username": obj.user.username}
+            })
+        return data
 
 
 
@@ -105,26 +105,26 @@ class FeedbackSerializer(serializers.ModelSerializer):
         model = Feedback
         fields = '__all__'
 
-from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from .models import Profile
 
-class UserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ["id", "username", "email", "first_name", "last_name"]
+
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    role = serializers.ChoiceField(
-        choices=Profile.ROLE_CHOICES,
-        default="student"
-    )
+    role = serializers.ChoiceField(choices=Profile.ROLE_CHOICES, default="student")
 
     class Meta:
-        model = User
-        fields = ["username", "email", "password", "first_name", "last_name", "role"]
+        model = User  # ✅ your api.User model
+        fields = ["email", "password", "first_name", "last_name", "role"]
+
+    def validate_email(self, value):
+        if not value:
+            raise serializers.ValidationError("Email is required.")
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email already registered.")
+        return value
 
     def validate_password(self, value):
         validate_password(value)
@@ -132,29 +132,21 @@ class RegisterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         role = validated_data.pop("role", "student")
+        email = validated_data.get("email")
 
         user = User.objects.create_user(
-            username=validated_data["username"],
-            email=validated_data.get("email", ""),
+            email=email,
             password=validated_data["password"],
             first_name=validated_data.get("first_name", ""),
             last_name=validated_data.get("last_name", "")
         )
 
-        # Ensure a profile exists
-        profile, created = Profile.objects.get_or_create(user=user)
+        profile, _ = Profile.objects.get_or_create(user=user)
         profile.role = role
-
-        # Auto-verify students, require admin for others
-        if role == "student":
-            profile.is_verified = True
-        else:
-            profile.is_verified = False  # Recruiters/Universities wait for admin approval
-
+        profile.is_verified = True if role == "student" else False
         profile.save()
-        return user
-User = get_user_model()
 
+        return user
 class EmailTokenObtainPairSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
@@ -169,7 +161,7 @@ class EmailTokenObtainPairSerializer(serializers.Serializer):
             raise serializers.ValidationError({"detail": "No user with this email."})
 
         # ✅ Authenticate using username under the hood
-        user = authenticate(username=user.username, password=password)
+        user = authenticate(email=user.email, password=password)
         if not user:
             raise serializers.ValidationError({"detail": "Invalid credentials."})
 
@@ -190,7 +182,6 @@ class EmailTokenObtainPairSerializer(serializers.Serializer):
             "user": {
                 "id": user.id,
                 "email": user.email,
-                "username": user.username,
                 "first_name": user.first_name,
                 "last_name": user.last_name,
                 "role": profile.role if profile else None,
