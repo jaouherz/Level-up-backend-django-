@@ -1,84 +1,513 @@
 <!DOCTYPE html>
+{% load static %}
+
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>JWT Login</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LevelUp - Login</title>
   <style>
+    :root {
+      --primary: #3a36e0;
+      --primary-dark: #2a27b8;
+      --secondary: #ff6b6b;
+      --accent: #4ecdc4;
+      --text: #2d3748;
+      --text-light: #718096;
+      --background: #f7fafc;
+      --white: #ffffff;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
     body {
-      font-family: Arial, sans-serif;
+      background-color: var(--background);
+      color: var(--text);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      background: #f4f6f9;
+      min-height: 100vh;
+      padding: 20px;
+      background-image: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
     }
-    form {
-      background: #fff;
-      padding: 25px 40px;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      width: 320px;
-      text-align: center;
+
+    .container {
+      display: flex;
+      width: 100%;
+      max-width: 900px;
+      min-height: 550px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
     }
+
+    .brand-section {
+      flex: 1;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-section::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .brand-section::after {
+      content: '';
+      position: absolute;
+      bottom: -80px;
+      left: -80px;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+  display: flex;
+  justify-content: center;  /* centers horizontally */
+  align-items: center;      /* centers vertically */
+  margin-bottom: 30px;
+  height: 200px;
+}
+
+.logo-img {
+  width: 250px;
+  height: auto;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+    .logo-text {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .brand-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-title {
+      font-size: 28px;
+      margin-bottom: 15px;
+      line-height: 1.3;
+    }
+
+    .brand-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    .form-section {
+      flex: 1;
+      background-color: var(--white);
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-header {
+      margin-bottom: 30px;
+    }
+
+    .form-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .form-subtitle {
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
     input {
       width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      padding: 12px 15px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
     }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(58, 54, 224, 0.1);
+    }
+
+    .password-container {
+      position: relative;
+    }
+
+    .toggle-password {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+    }
+
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      font-size: 14px;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+    }
+
+    .remember-me input {
+      width: auto;
+      margin-right: 8px;
+    }
+
+    .forgot-password {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    .forgot-password:hover {
+      text-decoration: underline;
+    }
+
     button {
-      background: #0066ff;
+      background: var(--primary);
       color: white;
       border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
       cursor: pointer;
+      transition: background 0.3s;
       width: 100%;
     }
+
     button:hover {
-      background: #004ecc;
+      background: var(--primary-dark);
     }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 25px 0;
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #e2e8f0;
+    }
+
+    .divider::before {
+      margin-right: 10px;
+    }
+
+    .divider::after {
+      margin-left: 10px;
+    }
+
+    .social-login {
+      display: flex;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .social-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: white;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .social-btn:hover {
+      background: #f7fafc;
+    }
+
+    .social-icon {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+    }
+
     .link {
-      margin-top: 10px;
-      font-size: 0.9em;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
     }
+
+    .link a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .link a:hover {
+      text-decoration: underline;
+    }
+
+    .alert {
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .alert-success {
+      background-color: #f0fff4;
+      color: #2d7d32;
+      border: 1px solid #9ae6b4;
+    }
+
+    .alert-error {
+      background-color: #fed7d7;
+      color: #c53030;
+      border: 1px solid #feb2b2;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        max-width: 450px;
+      }
+
+      .brand-section {
+        padding: 30px;
+      }
+
+      .form-section {
+        padding: 30px;
+      }
+    }
+      .password-container {
+  position: relative;
+}
+
+.password-container input {
+  padding-right: 45px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.toggle-password:hover {
+  color: var(--primary);
+}
   </style>
 </head>
 <body>
-  <form id="loginForm">
-    <h2>Login</h2>
-    <input type="email" id="email" placeholder="Email" required>
-    <input type="password" id="password" placeholder="Password" required>
-    <button type="submit">Login</button>
-    <div class="link">
-      <a href="/api/auth/jwt-register/">Don't have an account? Register</a>
+  <div class="container">
+    <div class="brand-section">
+   <div class="logo">
+  <img src="{% static 'api/images/Modern-Level-Up-lettering-logo-design-Graphics-5604056-1-removebg-preview.png' %}"
+       alt="LevelUp Logo"
+       class="logo-img">
+</div>
+      <div class="brand-content">
+        <h1 class="brand-title">Find Your Next Career Move</h1>
+        <p class="brand-subtitle">Connect with top employers and discover opportunities that match your skills and ambitions.</p>
+      </div>
     </div>
-  </form>
+
+    <div class="form-section">
+      <div class="form-header">
+        <h2 class="form-title">Welcome Back</h2>
+        <p class="form-subtitle">Sign in to your account to continue your job search</p>
+      </div>
+
+      <div id="alert" class="alert"></div>
+
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="Enter your email" required>
+        </div>
+
+        <div class="form-group">
+  <label for="password">Password</label>
+  <div class="password-container">
+    <input type="password" id="password" placeholder="Create a password" required>
+    <button type="button" class="toggle-password">👁️</button>
+  </div>
+</div>
+
+        <div class="form-options">
+          <div class="remember-me">
+            <input type="checkbox" id="remember">
+            <label for="remember">Remember me</label>
+          </div>
+          <a href="#" class="forgot-password">Forgot password?</a>
+        </div>
+
+        <button type="submit">Sign In</button>
+
+        <div class="divider">Or continue with</div>
+
+        <div class="social-login">
+          <button type="button" class="social-btn">
+            <svg class="social-icon" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Google
+          </button>
+
+          <button type="button" class="social-btn">
+            <svg class="social-icon" viewBox="0 0 24 24">
+              <path fill="#1877F2" d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+            </svg>
+            Facebook
+          </button>
+        </div>
+
+        <div class="link">
+          Don't have an account? <a href="/api/auth/jwt-register/">Create an account</a>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script>
     document.getElementById("loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
+      const alert = document.getElementById("alert");
 
-      const res = await fetch("/api/login/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password })
-      });
+      // Show loading state
+      const submitBtn = document.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Signing In...";
+      submitBtn.disabled = true;
 
-      const data = await res.json();
+      try {
+        const res = await fetch("/api/login/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
 
-      if (res.ok) {
-        localStorage.setItem("access", data.access);
-        localStorage.setItem("refresh", data.refresh);
-        alert("✅ Logged in successfully!");
-        window.location.href = "/"; // redirect to homepage
-      } else {
-        alert("❌ " + (data.detail || "Invalid credentials"));
+        const data = await res.json();
+
+        if (res.ok) {
+          localStorage.setItem("access", data.access);
+          localStorage.setItem("refresh", data.refresh);
+
+          // Show success message
+          alert.textContent = "✅ Logged in successfully! Redirecting...";
+          alert.className = "alert alert-success";
+          alert.style.display = "block";
+
+          // Redirect after a short delay
+          setTimeout(() => {
+            window.location.href = "/";
+          }, 1500);
+        } else {
+          alert.textContent = "❌ " + (data.detail || "Invalid credentials");
+          alert.className = "alert alert-error";
+          alert.style.display = "block";
+        }
+      } catch (error) {
+        alert.textContent = "❌ Network error. Please try again.";
+        alert.className = "alert alert-error";
+        alert.style.display = "block";
+      } finally {
+        // Reset button state
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
       }
+    });
+
+    // Toggle password visibility
+   document.querySelectorAll('.toggle-password').forEach(button => {
+  button.addEventListener('click', function() {
+    const passwordInput = this.parentElement.querySelector('input');
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    this.textContent = type === 'password' ? '👁️' : '🔒';
+  });
+});
+
+    // Add some animation on load
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelector('.container').style.opacity = '0';
+      document.querySelector('.container').style.transform = 'translateY(20px)';
+
+      setTimeout(() => {
+        document.querySelector('.container').style.transition = 'opacity 0.5s, transform 0.5s';
+        document.querySelector('.container').style.opacity = '1';
+        document.querySelector('.container').style.transform = 'translateY(0)';
+      }, 100);
     });
   </script>
 </body>

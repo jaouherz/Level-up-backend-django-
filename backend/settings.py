@@ -48,7 +48,7 @@ INSTALLED_APPS = [
     'drf_yasg',
 
 ]
-STATIC_URL = 'static/'
+STATIC_URL = '/static/'
 
 # Where Django will put collected static files
 STATIC_ROOT = BASE_DIR / "staticfiles"

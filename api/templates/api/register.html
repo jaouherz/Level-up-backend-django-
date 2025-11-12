@@ -1,90 +1,497 @@
 <!DOCTYPE html>
+{% load static %}
+
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LevelUp - Register</title>
   <style>
-    body { font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f4f6f9; }
-    form { background: #fff; padding: 25px 40px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); width: 440px; max-height: 90vh; overflow-y: auto; }
-    input, select { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 5px; }
-    button { width: 100%; padding: 10px 15px; margin-top: 10px; border: none; border-radius: 5px; background: #28a745; color: #fff; cursor: pointer; }
-    button.secondary { background: #0066ff; margin-top: 6px; }
-    button:hover { opacity: .95 }
-    .hidden { display: none; }
-    h3 { margin: 12px 0 6px; color: #444; }
-    small.muted { color: #666; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    :root {
+      --primary: #3a36e0;
+      --primary-dark: #2a27b8;
+      --secondary: #ff6b6b;
+      --accent: #4ecdc4;
+      --text: #2d3748;
+      --text-light: #718096;
+      --background: #f7fafc;
+      --white: #ffffff;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+      --radius: 12px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--background);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 20px;
+      background-image: linear-gradient(135deg, #f5f7fa 0%, #e4edf5 100%);
+    }
+    .password-container {
+  position: relative;
+}
+
+.password-container input {
+  padding-right: 45px;
+}
+
+.toggle-password {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.toggle-password:hover {
+  color: var(--primary);
+}
+
+
+
+
+ .logo {
+  display: flex;
+  justify-content: center;  /* centers horizontally */
+  align-items: center;      /* centers vertically */
+  margin-bottom: 30px;
+  height: 200px;
+}
+
+.logo-img {
+  width: 250px;
+  height: auto;
+  border-radius: 10px;
+  object-fit: contain;
+}
+    .container {
+      display: flex;
+      width: 100%;
+      max-width: 1000px;
+      min-height: 650px;
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+    }
+
+    .brand-section {
+      flex: 1;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .brand-section::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .brand-section::after {
+      content: '';
+      position: absolute;
+      bottom: -80px;
+      left: -80px;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      margin-bottom: 30px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background-color: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-right: 12px;
+      font-weight: bold;
+      font-size: 20px;
+    }
+
+    .logo-text {
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .brand-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-title {
+      font-size: 28px;
+      margin-bottom: 15px;
+      line-height: 1.3;
+    }
+
+    .brand-subtitle {
+      font-size: 16px;
+      opacity: 0.9;
+      line-height: 1.6;
+    }
+
+    .form-section {
+      flex: 1.2;
+      background-color: var(--white);
+      padding: 40px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+      max-height: 90vh;
+    }
+
+    .form-header {
+      margin-bottom: 30px;
+    }
+
+    .form-title {
+      font-size: 24px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .form-subtitle {
+      color: var(--text-light);
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    input, select {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 15px;
+      transition: all 0.3s;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(58, 54, 224, 0.1);
+    }
+
+    .role-section {
+      background: #f8fafc;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 4px solid var(--primary);
+      margin: 20px 0;
+    }
+
+    .role-section h3 {
+      margin-bottom: 15px;
+      font-size: 16px;
+      color: var(--primary);
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    button {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+    }
+
+    button:hover {
+      background: var(--primary-dark);
+    }
+
+    .secondary-btn {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+      margin-top: 10px;
+    }
+
+    .secondary-btn:hover {
+      background: var(--primary);
+      color: white;
+    }
+
+    .link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    .link a {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .link a:hover {
+      text-decoration: underline;
+    }
+
+    .alert {
+      padding: 12px 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      display: none;
+    }
+
+    .alert-success {
+      background-color: #f0fff4;
+      color: #2d7d32;
+      border: 1px solid #9ae6b4;
+    }
+
+    .alert-error {
+      background-color: #fed7d7;
+      color: #c53030;
+      border: 1px solid #feb2b2;
+    }
+
+    .muted {
+      color: var(--text-light);
+      font-size: 12px;
+      margin-top: 5px;
+      display: block;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+        max-width: 450px;
+      }
+
+      .brand-section {
+        padding: 30px;
+      }
+
+      .form-section {
+        padding: 30px;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+    }
   </style>
 </head>
 <body>
-  <form id="registerForm">
-    <h2>Create account</h2>
-
-    <!-- Common fields -->
-    <input type="email" id="email" placeholder="Email" required>
-    <div class="row">
-      <input type="text" id="first_name" placeholder="First name" required>
-      <input type="text" id="last_name" placeholder="Last name" required>
-    </div>
-    <input type="password" id="password" placeholder="Password" required>
-
-    <select id="role" required>
-      <option value="">— Select Role —</option>
-      <option value="student">Student</option>
-      <option value="recruiter">Recruiter (Company HR)</option>
-      <option value="university">University Admin</option>
-    </select>
-
-    <!-- Student -->
-    <div id="studentFields" class="hidden">
-      <h3>Student</h3>
-      <label>University (existing only)</label>
-      <select id="university_id"></select>
-      <input type="text" id="field_of_study" placeholder="Field of study (optional)">
-      <input type="number" step="0.01" id="gpa" placeholder="GPA (optional)">
-      <small class="muted">Students must select an existing university.</small>
-    </div>
-
-    <!-- Recruiter -->
-    <div id="recruiterFields" class="hidden">
-      <h3>Company</h3>
-      <label>Choose existing company</label>
-      <select id="company_id"></select>
-      <button type="button" id="toggleAddCompany" class="secondary">+ Add new company</button>
-      <div id="newCompanyFields" class="hidden">
-        <input type="text" id="company_name" placeholder="Company name">
-        <input type="text" id="company_industry" placeholder="Industry (optional)">
-        <div class="row">
-          <input type="text" id="company_city" placeholder="City (optional)">
-          <input type="text" id="company_country" placeholder="Country (optional)">
-        </div>
-        <input type="url" id="company_website" placeholder="Website (optional)">
-        <small class="muted">If you fill a company name here, it will be created.</small>
+  <div class="container">
+    <div class="brand-section">
+        <div class="logo">
+  <img src="{% static 'api/images/Modern-Level-Up-lettering-logo-design-Graphics-5604056-1-removebg-preview.png' %}"
+       alt="LevelUp Logo"
+       class="logo-img">
+</div>
+      <div class="brand-content">
+        <h1 class="brand-title">Start Your Career Journey</h1>
+        <p class="brand-subtitle">Join thousands of professionals who found their dream jobs through LevelUp. Create your profile and get matched with top opportunities.</p>
       </div>
     </div>
 
-    <!-- University Admin -->
-    <div id="universityFields" class="hidden">
-      <h3>University</h3>
-      <label>Choose existing university</label>
-      <select id="admin_university_id"></select>
-      <button type="button" id="toggleAddUniversity" class="secondary">+ Add new university</button>
-      <div id="newUniversityFields" class="hidden">
-        <input type="text" id="university_name" placeholder="University name">
-        <div class="row">
-          <input type="text" id="university_city" placeholder="City (optional)">
-          <input type="text" id="university_country" placeholder="Country (optional)">
-        </div>
-        <input type="url" id="university_website" placeholder="Website (optional)">
-        <small class="muted">If you fill a university name here, it will be created.</small>
+    <div class="form-section">
+      <div class="form-header">
+        <h2 class="form-title">Create Your Account</h2>
+        <p class="form-subtitle">Join LevelUp to access exclusive opportunities</p>
       </div>
-    </div>
 
-    <button type="submit">Register</button>
-    <div style="text-align:center; margin-top:10px;">
-      <a href="/api/auth/jwt-login/">Already have an account? Login</a>
+      <div id="alert" class="alert"></div>
+
+      <form id="registerForm">
+        <!-- Common fields -->
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input type="email" id="email" placeholder="Enter your email" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" id="first_name" placeholder="First name" required>
+          </div>
+
+          <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" id="last_name" placeholder="Last name" required>
+          </div>
+        </div>
+
+       <div class="form-group">
+  <label for="password">Password</label>
+  <div class="password-container">
+    <input type="password" id="password" placeholder="Create a password" required>
+    <button type="button" class="toggle-password">👁️</button>
+  </div>
+</div>
+        <div class="form-group">
+          <label for="role">Account Type</label>
+          <select id="role" required>
+            <option value="">— Select Role —</option>
+            <option value="student">Student</option>
+            <option value="recruiter">Recruiter (Company HR)</option>
+            <option value="university">University Admin</option>
+          </select>
+        </div>
+
+        <!-- Student Fields -->
+        <div id="studentFields" class="role-section hidden">
+          <h3>Student Information</h3>
+          <div class="form-group">
+            <label for="university_id">University (existing only)</label>
+            <select id="university_id"></select>
+            <small class="muted">Students must select an existing university.</small>
+          </div>
+          <div class="form-group">
+            <label for="field_of_study">Field of Study (optional)</label>
+            <input type="text" id="field_of_study" placeholder="Field of study">
+          </div>
+          <div class="form-group">
+            <label for="gpa">GPA (optional)</label>
+            <input type="number" step="0.01" id="gpa" placeholder="GPA">
+          </div>
+        </div>
+
+        <!-- Recruiter Fields -->
+        <div id="recruiterFields" class="role-section hidden">
+          <h3>Company Information</h3>
+          <div class="form-group">
+            <label for="company_id">Choose existing company</label>
+            <select id="company_id"></select>
+          </div>
+          <button type="button" id="toggleAddCompany" class="secondary-btn">+ Add new company</button>
+
+          <div id="newCompanyFields" class="hidden">
+            <div class="form-group">
+              <label for="company_name">Company Name</label>
+              <input type="text" id="company_name" placeholder="Company name">
+            </div>
+            <div class="form-group">
+              <label for="company_industry">Industry (optional)</label>
+              <input type="text" id="company_industry" placeholder="Industry">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="company_city">City (optional)</label>
+                <input type="text" id="company_city" placeholder="City">
+              </div>
+              <div class="form-group">
+                <label for="company_country">Country (optional)</label>
+                <input type="text" id="company_country" placeholder="Country">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="company_website">Website (optional)</label>
+              <input type="url" id="company_website" placeholder="Website">
+            </div>
+            <small class="muted">If you fill a company name here, it will be created.</small>
+          </div>
+        </div>
+
+        <!-- University Admin Fields -->
+        <div id="universityFields" class="role-section hidden">
+          <h3>University Information</h3>
+          <div class="form-group">
+            <label for="admin_university_id">Choose existing university</label>
+            <select id="admin_university_id"></select>
+          </div>
+          <button type="button" id="toggleAddUniversity" class="secondary-btn">+ Add new university</button>
+
+          <div id="newUniversityFields" class="hidden">
+            <div class="form-group">
+              <label for="university_name">University Name</label>
+              <input type="text" id="university_name" placeholder="University name">
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="university_city">City (optional)</label>
+                <input type="text" id="university_city" placeholder="City">
+              </div>
+              <div class="form-group">
+                <label for="university_country">Country (optional)</label>
+                <input type="text" id="university_country" placeholder="Country">
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="university_website">Website (optional)</label>
+              <input type="url" id="university_website" placeholder="Website">
+            </div>
+            <small class="muted">If you fill a university name here, it will be created.</small>
+          </div>
+        </div>
+
+        <button type="submit">Create Account</button>
+
+        <div class="link">
+          Already have an account? <a href="/api/auth/jwt-login/">Sign in</a>
+        </div>
+      </form>
     </div>
-  </form>
+  </div>
 
   <script>
     const role = document.getElementById("role");
@@ -112,6 +519,7 @@
     toggleAddCompany.addEventListener("click", () => {
       newCompanyFields.classList.toggle("hidden");
     });
+
     toggleAddUniversity.addEventListener("click", () => {
       newUniversityFields.classList.toggle("hidden");
     });
@@ -184,22 +592,63 @@
         }
       }
 
+      // Show loading state
+      const submitBtn = document.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = "Creating Account...";
+      submitBtn.disabled = true;
+
       try {
         const res = await fetch("/api/register/", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
+
         const data = await res.json();
+        const alert = document.getElementById("alert");
+
         if (res.ok) {
-          alert("✅ Registration successful!");
-          window.location.href = "/api/auth/jwt-login/";
+          alert.textContent = "✅ Registration successful! Redirecting...";
+          alert.className = "alert alert-success";
+          alert.style.display = "block";
+
+          setTimeout(() => {
+            window.location.href = "/api/auth/jwt-login/";
+          }, 1500);
         } else {
-          alert("❌ " + JSON.stringify(data));
+          alert.textContent = "❌ " + JSON.stringify(data);
+          alert.className = "alert alert-error";
+          alert.style.display = "block";
         }
       } catch (err) {
-        alert("❌ Network error: " + err.message);
+        const alert = document.getElementById("alert");
+        alert.textContent = "❌ Network error: " + err.message;
+        alert.className = "alert alert-error";
+        alert.style.display = "block";
+      } finally {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
       }
+    });
+document.querySelectorAll('.toggle-password').forEach(button => {
+  button.addEventListener('click', function() {
+    const passwordInput = this.parentElement.querySelector('input');
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+    passwordInput.setAttribute('type', type);
+    this.textContent = type === 'password' ? '👁️' : '🔒';
+  });
+});
+    // Add some animation on load
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelector('.container').style.opacity = '0';
+      document.querySelector('.container').style.transform = 'translateY(20px)';
+
+      setTimeout(() => {
+        document.querySelector('.container').style.transition = 'opacity 0.5s, transform 0.5s';
+        document.querySelector('.container').style.opacity = '1';
+        document.querySelector('.container').style.transform = 'translateY(0)';
+      }, 100);
     });
   </script>
 </body>
