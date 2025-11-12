@@ -103,11 +103,22 @@ class Profile(models.Model):
     is_verified = models.BooleanField(default=False)
     skills = models.ManyToManyField(Skill, blank=True, related_name='profiles')
     certifications = models.ManyToManyField(Certification, blank=True, related_name='profiles')
-
+    company = models.ForeignKey("api.Company", on_delete=models.SET_NULL, null=True, blank=True,related_name='employees')
     def __str__(self):
         return f"{self.user.email} ({self.role})"
 
+# =========================================================
+# COMPANY
+# =========================================================
+class Company(models.Model):
+    name = models.CharField(max_length=200, unique=True)
+    industry = models.CharField(max_length=150, blank=True)
+    website = models.URLField(blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
 
+    def __str__(self):
+        return self.name
 # =========================================================
 # OFFER
 # =========================================================

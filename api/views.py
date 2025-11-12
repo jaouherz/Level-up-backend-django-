@@ -21,12 +21,12 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from api.models import (
     Application, Offer, Profile, Skill, Certification,
-    University, ScoreHistory, Feedback
+    University, ScoreHistory, Feedback, Company
 )
 from api.serializers import (
     ApplicationSerializer, ProfileSerializer, OfferSerializer,
     SkillSerializer, CertificationSerializer, UniversitySerializer,
-    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, EmailTokenObtainPairSerializer
+    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, EmailTokenObtainPairSerializer, CompanySerializer
 )
 from api.ml_utils import predict_fit
 
@@ -69,7 +69,7 @@ class ApplicationViewSet(viewsets.GenericViewSet,
 
         count = replace_fake_candidates(app.offer.id)
         return Response({
-            "message": f"Candidate {app.user.username} marked as fake.",
+            "message": f"Candidate {app.user.email} marked as fake.",
             "score_decrement": decrement_points,
             "replacements_made": count
         }, status=200)
@@ -108,7 +108,7 @@ class ApplicationViewSet(viewsets.GenericViewSet,
 
         return Response({
             "message": "Application created" if created else "Application updated",
-            "user": user.username,
+            "user":  user.email,
             "offer": offer.title,
             "predicted_fit": round(fit_score, 3),
             "id": app.id
@@ -149,7 +149,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
         return Response({
             "message": "Profile created/updated",
             "id": profile.id,
-            "user": user.username,
+            "user": user.email,
             "role": profile.role,
             "skills": [s.name for s in skills],
             "certifications": [c.name for c in certs],
@@ -179,7 +179,7 @@ def ranked_candidates(request, offer_id):
 
     candidates = [
         {
-            "username": a.user.username,
+            "email": a.user.email,
             "field_of_study": getattr(a.user.profile, "field_of_study", None),
             "gpa": getattr(a.user.profile, "gpa", None),
             "score": getattr(a.user.profile, "score", None),
@@ -278,11 +278,46 @@ class OfferViewSet(viewsets.ModelViewSet):
             "message": "Offer created",
             "id": offer.id,
             "title": offer.title,
-            "recruiter": created_by.username if created_by else None,
+            "recruiter": created_by.email if created_by else None,
             "skills": [s.name for s in skills],
             "field_required": field
         }, status=201)
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def recommended(self, request):
+
+        user = request.user
+        profile = getattr(user, "profile", None)
+
+        if not profile or profile.role != "student":
+            return Response({"detail": "Only students can view recommendations."}, status=403)
+
+        today = date.today()
+        offers = Offer.objects.filter(is_closed=False).all()
+
+        results = []
+        for offer in offers:
+            if offer.deadline and today > offer.deadline:
+                if not (offer.extended_deadline and today <= offer.extended_deadline):
+                    continue
+
+            fit = predict_fit(profile, offer)
+            results.append({
+                "id": offer.id,
+                "title": offer.title,
+                "company": offer.company if hasattr(offer, "company") else None,
+                "field_required": offer.field_required,
+                "level_required": offer.level_required,
+                "predicted_fit": round(fit, 3),
+            })
+
+        results.sort(key=lambda x: x["predicted_fit"], reverse=True)
+
+        return Response({
+            "student": user.email,
+            "total_offers": len(results),
+            "offers": results
+        })
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def close(self, request, pk=None):
         # (Optionally: restrict to offer owner or recruiter/admin)
@@ -344,11 +379,6 @@ class CertificationViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
 
-class UniversityViewSet(viewsets.ModelViewSet):
-    queryset = University.objects.all()
-    serializer_class = UniversitySerializer
-    permission_classes = [IsAuthenticated]
-
 
 class ScoreHistoryViewSet(viewsets.ModelViewSet):
     queryset = ScoreHistory.objects.all()
@@ -368,18 +398,11 @@ class RegisterView(generics.CreateAPIView):
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        return Response({
-            "user": {
-                "id": user.id,
-                "email": user.email,
-                "first_name": user.first_name,
-                "last_name": user.last_name,
-            },
-            "refresh": str(refresh),
-            "access": str(refresh.access_token),
-        }, status=201)
+
+        # serializer.save() already returns {"user": ..., "access": ..., "refresh": ...}
+        payload = serializer.save()
+
+        return Response(payload, status=status.HTTP_201_CREATED)
 @method_decorator(csrf_exempt, name='dispatch')
 class EmailTokenObtainPairView(APIView):
     permission_classes = [permissions.AllowAny]
@@ -441,3 +464,13 @@ def html_jwt_login(request):
 
 def html_jwt_register(request):
     return render(request, "api/register.html")
+class UniversityViewSet(viewsets.ModelViewSet):
+    queryset = University.objects.all()
+    serializer_class = UniversitySerializer
+    permission_classes = [permissions.AllowAny]
+
+class CompanyViewSet(viewsets.ModelViewSet):
+    queryset = Company.objects.all()
+    serializer_class = CompanySerializer
+    permission_classes = [permissions.AllowAny]
+

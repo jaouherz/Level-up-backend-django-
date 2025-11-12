@@ -2,90 +2,203 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>JWT Register</title>
+  <title>Register</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: #f4f6f9;
-    }
-    form {
-      background: #fff;
-      padding: 25px 40px;
-      border-radius: 10px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
-      width: 340px;
-      text-align: center;
-    }
-    input, select {
-      width: 100%;
-      padding: 10px;
-      margin: 8px 0;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-    button {
-      background: #28a745;
-      color: white;
-      border: none;
-      padding: 10px 15px;
-      border-radius: 5px;
-      cursor: pointer;
-      width: 100%;
-    }
-    button:hover {
-      background: #1f8d3a;
-    }
-    .link {
-      margin-top: 10px;
-      font-size: 0.9em;
-    }
+    body { font-family: Arial, sans-serif; display: flex; align-items: center; justify-content: center; height: 100vh; background: #f4f6f9; }
+    form { background: #fff; padding: 25px 40px; border-radius: 10px; box-shadow: 0 3px 10px rgba(0,0,0,0.1); width: 440px; max-height: 90vh; overflow-y: auto; }
+    input, select { width: 100%; padding: 10px; margin: 6px 0; border: 1px solid #ccc; border-radius: 5px; }
+    button { width: 100%; padding: 10px 15px; margin-top: 10px; border: none; border-radius: 5px; background: #28a745; color: #fff; cursor: pointer; }
+    button.secondary { background: #0066ff; margin-top: 6px; }
+    button:hover { opacity: .95 }
+    .hidden { display: none; }
+    h3 { margin: 12px 0 6px; color: #444; }
+    small.muted { color: #666; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   </style>
 </head>
 <body>
   <form id="registerForm">
-    <h2>Register</h2>
+    <h2>Create account</h2>
+
+    <!-- Common fields -->
     <input type="email" id="email" placeholder="Email" required>
-    <input type="text" id="first_name" placeholder="First Name" required>
-    <input type="text" id="last_name" placeholder="Last Name" required>
+    <div class="row">
+      <input type="text" id="first_name" placeholder="First name" required>
+      <input type="text" id="last_name" placeholder="Last name" required>
+    </div>
     <input type="password" id="password" placeholder="Password" required>
-    <select id="role">
+
+    <select id="role" required>
+      <option value="">— Select Role —</option>
       <option value="student">Student</option>
-      <option value="recruiter">Recruiter</option>
-      <option value="university">University</option>
+      <option value="recruiter">Recruiter (Company HR)</option>
+      <option value="university">University Admin</option>
     </select>
+
+    <!-- Student -->
+    <div id="studentFields" class="hidden">
+      <h3>Student</h3>
+      <label>University (existing only)</label>
+      <select id="university_id"></select>
+      <input type="text" id="field_of_study" placeholder="Field of study (optional)">
+      <input type="number" step="0.01" id="gpa" placeholder="GPA (optional)">
+      <small class="muted">Students must select an existing university.</small>
+    </div>
+
+    <!-- Recruiter -->
+    <div id="recruiterFields" class="hidden">
+      <h3>Company</h3>
+      <label>Choose existing company</label>
+      <select id="company_id"></select>
+      <button type="button" id="toggleAddCompany" class="secondary">+ Add new company</button>
+      <div id="newCompanyFields" class="hidden">
+        <input type="text" id="company_name" placeholder="Company name">
+        <input type="text" id="company_industry" placeholder="Industry (optional)">
+        <div class="row">
+          <input type="text" id="company_city" placeholder="City (optional)">
+          <input type="text" id="company_country" placeholder="Country (optional)">
+        </div>
+        <input type="url" id="company_website" placeholder="Website (optional)">
+        <small class="muted">If you fill a company name here, it will be created.</small>
+      </div>
+    </div>
+
+    <!-- University Admin -->
+    <div id="universityFields" class="hidden">
+      <h3>University</h3>
+      <label>Choose existing university</label>
+      <select id="admin_university_id"></select>
+      <button type="button" id="toggleAddUniversity" class="secondary">+ Add new university</button>
+      <div id="newUniversityFields" class="hidden">
+        <input type="text" id="university_name" placeholder="University name">
+        <div class="row">
+          <input type="text" id="university_city" placeholder="City (optional)">
+          <input type="text" id="university_country" placeholder="Country (optional)">
+        </div>
+        <input type="url" id="university_website" placeholder="Website (optional)">
+        <small class="muted">If you fill a university name here, it will be created.</small>
+      </div>
+    </div>
+
     <button type="submit">Register</button>
-    <div class="link">
-      <a href="api/auth/jwt-login/">Already have an account? Login</a>
+    <div style="text-align:center; margin-top:10px;">
+      <a href="/api/auth/jwt-login/">Already have an account? Login</a>
     </div>
   </form>
 
   <script>
+    const role = document.getElementById("role");
+    const studentFields = document.getElementById("studentFields");
+    const recruiterFields = document.getElementById("recruiterFields");
+    const universityFields = document.getElementById("universityFields");
+
+    const uniSelectStudent = document.getElementById("university_id");
+    const uniSelectAdmin = document.getElementById("admin_university_id");
+    const compSelect = document.getElementById("company_id");
+
+    const toggleAddCompany = document.getElementById("toggleAddCompany");
+    const newCompanyFields = document.getElementById("newCompanyFields");
+
+    const toggleAddUniversity = document.getElementById("toggleAddUniversity");
+    const newUniversityFields = document.getElementById("newUniversityFields");
+
+    role.addEventListener("change", () => {
+      const v = role.value;
+      studentFields.classList.toggle("hidden", v !== "student");
+      recruiterFields.classList.toggle("hidden", v !== "recruiter");
+      universityFields.classList.toggle("hidden", v !== "university");
+    });
+
+    toggleAddCompany.addEventListener("click", () => {
+      newCompanyFields.classList.toggle("hidden");
+    });
+    toggleAddUniversity.addEventListener("click", () => {
+      newUniversityFields.classList.toggle("hidden");
+    });
+
+    async function loadLists() {
+      try {
+        const uniRes = await fetch("http://127.0.0.1:8000/api/universities/");
+        const universities = await uniRes.json();
+        [uniSelectStudent, uniSelectAdmin].forEach(sel => {
+          sel.innerHTML = "";
+          universities.forEach(u => {
+            const opt = document.createElement("option");
+            opt.value = u.id;
+            opt.textContent = u.name;
+            sel.appendChild(opt);
+          });
+        });
+
+        const compRes = await fetch("http://127.0.0.1:8000/api/companies/");
+        const companies = await compRes.json();
+        compSelect.innerHTML = "";
+        companies.forEach(c => {
+          const opt = document.createElement("option");
+          opt.value = c.id;
+          opt.textContent = c.name;
+          compSelect.appendChild(opt);
+        });
+      } catch (e) {
+        console.error("Failed to load lists", e);
+      }
+    }
+    loadLists();
+
     document.getElementById("registerForm").addEventListener("submit", async (e) => {
       e.preventDefault();
-      const email = document.getElementById("email").value.trim();
-      const password = document.getElementById("password").value.trim();
-      const first_name = document.getElementById("first_name").value.trim();
-      const last_name = document.getElementById("last_name").value.trim();
-      const role = document.getElementById("role").value;
 
-      const res = await fetch("/api/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, first_name, last_name, role })
-      });
+      const payload = {
+        email: document.getElementById("email").value.trim(),
+        password: document.getElementById("password").value.trim(),
+        first_name: document.getElementById("first_name").value.trim(),
+        last_name: document.getElementById("last_name").value.trim(),
+        role: role.value
+      };
 
-      const data = await res.json();
+      if (role.value === "student") {
+        payload.university_id = uniSelectStudent.value;
+        payload.field_of_study = document.getElementById("field_of_study").value.trim();
+        const gpa = document.getElementById("gpa").value.trim();
+        if (gpa) payload.gpa = gpa;
 
-      if (res.ok) {
-        alert("✅ Registration successful!");
-        window.location.href = "api/auth/jwt-login/";
-      } else {
-        alert("❌ " + (JSON.stringify(data)));
+      } else if (role.value === "recruiter") {
+        if (!newCompanyFields.classList.contains("hidden")) {
+          payload.company_name = document.getElementById("company_name").value.trim();
+          payload.company_industry = document.getElementById("company_industry").value.trim();
+          payload.company_city = document.getElementById("company_city").value.trim();
+          payload.company_country = document.getElementById("company_country").value.trim();
+          payload.company_website = document.getElementById("company_website").value.trim();
+        } else {
+          payload.company_id = compSelect.value;
+        }
+
+      } else if (role.value === "university") {
+        if (!newUniversityFields.classList.contains("hidden")) {
+          payload.university_name = document.getElementById("university_name").value.trim();
+          payload.university_city = document.getElementById("university_city").value.trim();
+          payload.university_country = document.getElementById("university_country").value.trim();
+          payload.university_website = document.getElementById("university_website").value.trim();
+        } else {
+          payload.university_id = uniSelectAdmin.value;
+        }
+      }
+
+      try {
+        const res = await fetch("/api/register/", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (res.ok) {
+          alert("✅ Registration successful!");
+          window.location.href = "/api/auth/jwt-login/";
+        } else {
+          alert("❌ " + JSON.stringify(data));
+        }
+      } catch (err) {
+        alert("❌ Network error: " + err.message);
       }
     });
   </script>
