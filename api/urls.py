@@ -5,7 +5,7 @@ from api.views import (
     ApplicationViewSet, ProfileViewSet, OfferViewSet, ranked_candidates,
     CertificationViewSet, UniversityViewSet, ScoreHistoryViewSet,
     replace_fakes_api, FeedbackViewSet, RegisterView, EmailTokenObtainPairView,
-    approve_user, pending_users, html_jwt_login, html_jwt_register, CompanyViewSet
+    approve_user, pending_users, html_jwt_login, html_jwt_register, CompanyViewSet, html_logout
 )
 
 router = DefaultRouter()
@@ -33,6 +33,8 @@ urlpatterns = [
     path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 
     # HTML pages
+    path("auth/logout/", html_logout, name="html_logout"),
+
     path("auth/jwt-login/", html_jwt_login, name="html_jwt_login"),
     path("auth/jwt-register/", html_jwt_register, name="html_jwt_register"),
 ]
