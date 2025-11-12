@@ -45,6 +45,17 @@ INSTALLED_APPS = [
     'corsheaders',
     'api',
     'recruiting',
+    'drf_yasg',
+
+]
+STATIC_URL = 'static/'
+
+# Where Django will put collected static files
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+# Extra directories to look for static files
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
 ]
 AUTH_USER_MODEL = 'api.User'
 LOGIN_URL = '/api/login/'
