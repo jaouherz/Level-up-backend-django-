@@ -470,8 +470,15 @@
 
           // Redirect after a short delay
           setTimeout(() => {
-            window.location.href = "/";
-          }, 1500);
+            const role = data.user.role;
+
+            if (role === "recruiter") {
+                window.location.href = "/recruiting/offers/";
+            } else if (role === "university") {
+                window.location.href = "/university/dashboard/";
+            } else {
+                window.location.href = "/";
+            }          }, 1500);
         } else {
           alert.textContent = "❌ " + (data.detail || "Invalid credentials");
           alert.className = "alert alert-error";
@@ -509,6 +516,37 @@
         document.querySelector('.container').style.transform = 'translateY(0)';
       }, 100);
     });
+
+      async function getValidAccessToken() {
+    let access = localStorage.getItem("access");
+    const refresh = localStorage.getItem("refresh");
+
+    // Check if token expired
+    const payload = JSON.parse(atob(access.split(".")[1]));
+    const now = Math.floor(Date.now() / 1000);
+
+    if (payload.exp < now) {
+        // refresh token
+        const res = await fetch("/api/refresh/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh })
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            localStorage.setItem("access", data.access);
+            return data.access;
+        } else {
+            // force logout
+            localStorage.clear();
+            window.location.href = "/api/auth/jwt-login/";
+            return null;
+        }
+    }
+
+    return access;
+}
   </script>
 </body>
 </html>

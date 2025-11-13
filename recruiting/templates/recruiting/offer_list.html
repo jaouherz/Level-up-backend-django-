@@ -1,37 +1,84 @@
-{% extends "recruiting/base.html" %}
-{% block title %}My Offers{% endblock %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h3>My Offers</h3>
-  <a href="{% url 'recruiting:offer_create' %}" class="btn btn-primary">New Offer</a>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Your Offers</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        body { background: #f5f8ff; }
+        .offer-card:hover { transform: scale(1.02); transition: 0.2s; }
+    </style>
+</head>
+
+<body class="p-4">
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Your Offers</h2>
+        <a href="/recruiting/offers/create/" class="btn btn-success">+ Create Offer</a>
+    </div>
+
+    <div id="offersContainer" class="mt-4 row"></div>
+
 </div>
 
-<table class="table table-hover bg-white">
-  <thead>
-    <tr>
-      <th>Title</th><th>Company</th><th>Open?</th><th>Deadline</th><th>Apps</th><th></th>
-    </tr>
-  </thead>
-  <tbody>
-  {% for o in offers %}
-    <tr>
-      <td>{{ o.title }}</td>
-      <td>{{ o.company }}</td>
-      <td>{{ o.is_closed|yesno:"No,Yes" }}</td>
-      <td>{{ o.deadline|default:"—" }}</td>
-      <td>{{ o.applications.count }}</td>
-      <td class="text-end">
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'recruiting:offer_edit' o.id %}">Edit</a>
-        <a class="btn btn-sm btn-outline-info" href="{% url 'recruiting:offer_apps' o.id %}">Applications</a>
-        {% if not o.is_closed %}
-        <a class="btn btn-sm btn-outline-danger" href="{% url 'recruiting:offer_close' o.id %}">Close</a>
-        {% endif %}
-      </td>
-    </tr>
-  {% empty %}
-    <tr><td colspan="6" class="text-muted">No offers found.</td></tr>
-  {% endfor %}
-  </tbody>
-</table>
-{% endblock %}
-s
+<script>
+    const access = localStorage.getItem("access");
+    if (!access) window.location.href = "/api/auth/jwt-login/";
+
+    async function loadOffers() {
+        const res = await fetch("/api/offers/my_company/", {
+            headers: { "Authorization": "Bearer " + access }
+        });
+
+        // 👇 Optional: only treat 401/403 as “session expired”
+        if (res.status === 401 || res.status === 403) {
+            alert("Session expired. Please login again.");
+            localStorage.clear();
+            window.location.href = "/api/auth/jwt-login/";
+            return;
+        }
+
+        const offers = await res.json();
+        const container = document.getElementById("offersContainer");
+        container.innerHTML = "";
+
+        if (!Array.isArray(offers)) {
+            console.error("Unexpected response from /api/offers/my_company/:", offers);
+            container.innerHTML = "<p>Could not load offers.</p>";
+            return;
+        }
+
+        offers.forEach(offer => {
+            // 🔥 Support BOTH:
+            //  - offer.company = "Bosch"
+            //  - offer.company = { id: 1, name: "Bosch", ... }
+            const companyName =
+                typeof offer.company === "string"
+                    ? offer.company
+                    : (offer.company && offer.company.name) ? offer.company.name : "";
+
+            container.innerHTML += `
+                <div class="col-md-4">
+                    <div class="card shadow offer-card mb-4">
+                        <div class="card-body">
+                            <h4>${offer.title}</h4>
+                            <p><strong>Company:</strong> ${companyName}</p>
+                            <p><strong>Field:</strong> ${offer.field_required || ""}</p>
+                            <a href="/recruiting/offers/${offer.id}/" class="btn btn-primary w-100">
+                                View Candidates
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    loadOffers();
+</script>
+</body>
+</html>

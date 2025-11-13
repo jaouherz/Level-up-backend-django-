@@ -130,22 +130,22 @@ class Offer(models.Model):
     ]
 
     title = models.CharField(max_length=200)
-    company = models.CharField(max_length=200)
+    company = models.ForeignKey("api.Company", on_delete=models.CASCADE, related_name="offers", db_column="company_id")
     description = models.TextField(blank=True)
     field_required = models.CharField(max_length=150, blank=True)
     level_required = models.CharField(max_length=20, choices=LEVEL_CHOICES, default='intern')
-    required_skills = models.ManyToManyField(Skill, blank=True, related_name='offers')
+    required_skills = models.ManyToManyField("api.Skill", blank=True, related_name='offers')
     location = models.CharField(max_length=150, blank=True)
     deadline = models.DateField(null=True, blank=True)
     is_closed = models.BooleanField(default=False)
     closed_at = models.DateTimeField(null=True, blank=True)
     extended_deadline = models.DateField(null=True, blank=True)
     created_by = models.ForeignKey("api.User", on_delete=models.SET_NULL, null=True, related_name="offers_created")
-    verified_by_university = models.ForeignKey(University, on_delete=models.SET_NULL, null=True, blank=True)
+    verified_by_university = models.ForeignKey("api.University", on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.title} @ {self.company}"
+        return f"{self.title} @ {self.company.name}"
 
 
 # =========================================================

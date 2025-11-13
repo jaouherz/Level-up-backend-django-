@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Create Offer</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+
+<body class="p-4">
+
+<div class="container mt-4" style="max-width: 650px;">
+
+    <a href="/recruiting/offers/" class="btn btn-secondary mb-3">← Back</a>
+
+    <h2>Create New Offer</h2>
+
+    <form id="offerForm" class="mt-4">
+
+        <input class="form-control mb-3" id="title" placeholder="Title" required>
+
+        <textarea class="form-control mb-3" id="description"
+                  rows="4" placeholder="Offer Description" required></textarea>
+
+        <input class="form-control mb-3" id="field_required" placeholder="Field Required" required>
+
+        <select class="form-control mb-3" id="level_required">
+            <option value="intern">Internship</option>
+            <option value="junior">Junior</option>
+            <option value="senior">Senior</option>
+        </select>
+
+        <label><strong>Required Skills</strong></label>
+        <select id="skillsSelect" class="form-control mb-3" multiple></select>
+
+        <div class="input-group mb-3">
+            <input id="newSkill" class="form-control" placeholder="Add new skill...">
+            <button type="button" class="btn btn-outline-primary" id="addSkillBtn">Add</button>
+        </div>
+
+        <button class="btn btn-success w-100" type="submit">Create Offer</button>
+
+    </form>
+
+</div>
+
+<script>
+    const access = localStorage.getItem("access");
+    if (!access) window.location.href = "/api/auth/jwt-login/";
+
+    // Load skills from backend
+    async function loadSkills() {
+        const res = await fetch("/api/skills/", {
+            headers: { "Authorization": "Bearer " + access }
+        });
+
+        const skills = await res.json();
+        const select = document.getElementById("skillsSelect");
+        select.innerHTML = "";
+
+        skills.forEach(skill => {
+            select.innerHTML += `<option value="${skill.name}">${skill.name}</option>`;
+        });
+    }
+
+    loadSkills();
+
+    // Add new skill (prevent duplicates)
+    document.getElementById("addSkillBtn").addEventListener("click", async () => {
+        const newSkill = document.getElementById("newSkill").value.trim();
+
+        if (!newSkill) return alert("Enter a skill name.");
+
+        const existing = Array
+            .from(document.querySelectorAll("#skillsSelect option"))
+            .map(opt => opt.value.toLowerCase());
+
+        if (existing.includes(newSkill.toLowerCase())) {
+            return alert("❌ Skill already exists!");
+        }
+
+        const res = await fetch("/api/skills/", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + access,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ name: newSkill })
+        });
+
+        if (res.ok) {
+            alert("✅ Skill added!");
+            document.getElementById("newSkill").value = "";
+            loadSkills();
+        } else {
+            alert("Error adding skill.");
+        }
+    });
+
+    // Create the offer
+    document.getElementById("offerForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+
+        const selectedSkills = Array
+            .from(document.getElementById("skillsSelect").selectedOptions)
+            .map(opt => opt.value);
+
+        const body = {
+            title: title.value,
+            description: description.value,
+            field_required: field_required.value,
+            level_required: level_required.value,
+            required_skills: selectedSkills
+        };
+
+        const res = await fetch("/api/offers/", {
+            method: "POST",
+            headers: {
+                "Authorization": "Bearer " + access,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(body)
+        });
+
+        if (res.ok) {
+            alert("Offer created!");
+            window.location.href = "/recruiting/offers/";
+        } else {
+            const data = await res.json();
+            alert("Error: " + JSON.stringify(data));
+        }
+    });
+
+</script>
+
+</body>
+</html>

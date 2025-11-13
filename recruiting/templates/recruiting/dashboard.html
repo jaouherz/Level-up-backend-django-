@@ -1,37 +1,47 @@
-{% extends "recruiting/base.html" %}
-{% block title %}RH Dashboard{% endblock %}
-{% block content %}
-<div class="row g-3">
-  <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <h6 class="text-muted">Total Offers</h6>
-      <h3>{{ total_offers }}</h3>
-    </div></div>
-  </div>
-  <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <h6 class="text-muted">Open Offers</h6>
-      <h3>{{ open_offers }}</h3>
-    </div></div>
-  </div>
-  <div class="col-md-4">
-    <div class="card"><div class="card-body">
-      <h6 class="text-muted">Applications</h6>
-      <h3>{{ total_apps }}</h3>
-    </div></div>
-  </div>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Recruiter Dashboard</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+
+    <style>
+        body { background: #f7f9fc; }
+        .card-hover:hover { transform: scale(1.02); transition: 0.2s; }
+    </style>
+</head>
+
+<body class="p-4">
+
+<div class="container mt-5">
+    <h2 class="mb-4">Recruiter Dashboard</h2>
+
+    <div class="row">
+        <div class="col-md-4">
+            <a href="/recruiting/offers/" class="text-decoration-none text-dark">
+                <div class="card shadow card-hover">
+                    <div class="card-body text-center">
+                        <h4>Your Offers</h4>
+                        <p>View and manage offers you created.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-4">
+            <a href="/recruiting/offers/create/" class="text-decoration-none text-dark">
+                <div class="card shadow card-hover">
+                    <div class="card-body text-center">
+                        <h4>Create Offer</h4>
+                        <p>Add a new internship or job opportunity.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
 </div>
 
-<h5 class="mt-4">Recent Offers</h5>
-<div class="list-group">
-  {% for o in offers %}
-    <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
-       href="{% url 'recruiting:offer_apps' o.id %}">
-      <span>{{ o.title }} @ {{ o.company }}</span>
-      <span class="badge bg-secondary">{{ o.applications.count }} apps</span>
-    </a>
-  {% empty %}
-    <div class="text-muted">No offers yet.</div>
-  {% endfor %}
-</div>
-{% endblock %}
+</body>
+</html>

@@ -247,42 +247,65 @@ class OfferViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]  # 🔒 secure
 
     def create(self, request, *args, **kwargs):
+        user = request.user
+        profile = user.profile
+
+        if profile.role != "recruiter":
+            return Response({"error": "Only recruiters can create offers."}, status=403)
+
+        if not profile.company:
+            return Response({"error": "Recruiter must belong to a company."}, status=400)
+
         data = request.data
+
         title = data.get("title")
-        company = data.get("company", "Unknown")
-        field = data.get("field_required")
-        level = data.get("level_required", "intern")
-        skill_names = data.get("required_skills", [])
+        description = data.get("description", "")
+        field_required = data.get("field_required")
+        level_required = data.get("level_required", "intern")
+        skills_list = data.get("required_skills", [])  # Already a list from frontend
 
-        if not title or not field:
-            return Response({"error": "title and field_required required"}, status=400)
-
-        # Role check
-        # if getattr(request.user.profile, "role", "student") not in ("recruiter", "admin"):
-        #     return Response({"detail": "Forbidden"}, status=403)
-
-        created_by = request.user  # 🔒 use the authenticated user
+        if not title or not field_required:
+            return Response({"error": "title and field_required are required"}, status=400)
 
         offer = Offer.objects.create(
             title=title,
-            company=company,
-            field_required=field,
-            level_required=level,
-            created_by=created_by,
+            description=description,
+            field_required=field_required,
+            level_required=level_required,
+            company=profile.company,  # ForeignKey now!
+            created_by=user
         )
 
-        skills = [Skill.objects.get_or_create(name=name)[0] for name in skill_names]
+        # Attach skills
+        skills = []
+        for name in skills_list:
+            skill, _ = Skill.objects.get_or_create(name=name)
+            skills.append(skill)
+
         offer.required_skills.set(skills)
 
         return Response({
             "message": "Offer created",
             "id": offer.id,
             "title": offer.title,
-            "recruiter": created_by.email if created_by else None,
-            "skills": [s.name for s in skills],
-            "field_required": field
+            "company": profile.company.name,
+            "skills": [s.name for s in skills]
         }, status=201)
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_company(self, request):
+        profile = request.user.profile
+
+        if profile.role != "recruiter":
+            return Response({"detail": "Only recruiters can access this."}, status=403)
+
+        if not profile.company:
+            return Response({"detail": "You are not assigned to any company."}, status=400)
+
+        offers = Offer.objects.filter(company=profile.company)
+
+        serializer = OfferSerializer(offers, many=True)
+        return Response(serializer.data)
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def recommended(self, request):
 
@@ -305,7 +328,7 @@ class OfferViewSet(viewsets.ModelViewSet):
             results.append({
                 "id": offer.id,
                 "title": offer.title,
-                "company": offer.company if hasattr(offer, "company") else None,
+                "company": offer.company.name if offer.company else None,
                 "field_required": offer.field_required,
                 "level_required": offer.level_required,
                 "predicted_fit": round(fit, 3),

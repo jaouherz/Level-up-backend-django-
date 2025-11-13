@@ -5,7 +5,7 @@ from api.views import (
     ApplicationViewSet, ProfileViewSet, OfferViewSet, ranked_candidates,
     CertificationViewSet, UniversityViewSet, ScoreHistoryViewSet,
     replace_fakes_api, FeedbackViewSet, RegisterView, EmailTokenObtainPairView,
-    approve_user, pending_users, html_jwt_login, html_jwt_register, CompanyViewSet, html_logout
+    approve_user, pending_users, html_jwt_login, html_jwt_register, CompanyViewSet, html_logout, SkillViewSet
 )
 
 router = DefaultRouter()
@@ -16,7 +16,7 @@ router.register(r'certifications', CertificationViewSet, basename='certification
 router.register(r'universities', UniversityViewSet, basename='universities')
 router.register(r'score-history', ScoreHistoryViewSet, basename='score-history')
 router.register(r'feedbacks', FeedbackViewSet, basename='feedbacks')
-router.register(r'companies', CompanyViewSet, basename='companies')
+router.register(r'skills', SkillViewSet, basename='skills')
 router.register(r"universities", UniversityViewSet)
 
 
@@ -26,6 +26,7 @@ urlpatterns = [
     path('offers/<int:offer_id>/replace_fakes/', replace_fakes_api),
     path("approve-user/<int:user_id>/", approve_user),
     path("pending-users/", pending_users),
+    path("offers/my-company/", OfferViewSet.as_view({"get": "my_company"})),
 
     # JWT API endpoints
     path("register/", RegisterView.as_view(), name="register"),
@@ -37,4 +38,5 @@ urlpatterns = [
 
     path("auth/jwt-login/", html_jwt_login, name="html_jwt_login"),
     path("auth/jwt-register/", html_jwt_register, name="html_jwt_register"),
+
 ]

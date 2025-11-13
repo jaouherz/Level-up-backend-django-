@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Offer Details</title>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+
+<body class="p-4">
+
+<div class="container mt-4">
+    <a href="/recruiting/offers/" class="btn btn-secondary mb-3">← Back to Offers</a>
+
+    <h2>Offer Details</h2>
+    <div id="offerInfo" class="mt-3 p-3 bg-light rounded shadow-sm"></div>
+
+    <h3 class="mt-4">Candidates</h3>
+    <button class="btn btn-warning mb-3" onclick="replaceFakes()">Replace Fake Candidates</button>
+
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Field</th>
+                <th>GPA</th>
+                <th>Score</th>
+                <th>Predicted Fit</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="candidatesTable"></tbody>
+    </table>
+
+</div>
+
+<script>
+    const access = localStorage.getItem("access");
+    if (!access) window.location.href = "/api/auth/jwt-login/";
+
+    const OFFER_ID = {{ offer_id }};
+
+    async function loadOffer() {
+        const res = await fetch(`/api/offers/${OFFER_ID}/`, {
+            headers: { "Authorization": "Bearer " + access }
+        });
+        const offer = await res.json();
+
+        document.getElementById("offerInfo").innerHTML = `
+            <h4>${offer.title}</h4>
+            <p><strong>Company:</strong> ${offer.company}</p>
+            <p><strong>Field Required:</strong> ${offer.field_required}</p>
+            <p><strong>Level:</strong> ${offer.level_required}</p>
+        `;
+    }
+
+    async function loadCandidates() {
+        const res = await fetch(`/api/offers/${OFFER_ID}/ranked_candidates/`, {
+            headers: { "Authorization": "Bearer " + access }
+        });
+        const data = await res.json();
+
+        const tbody = document.getElementById("candidatesTable");
+        tbody.innerHTML = "";
+
+        data.candidates.forEach(candidate => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${candidate.email}</td>
+                    <td>${candidate.field_of_study ?? "-"}</td>
+                    <td>${candidate.gpa ?? "-"}</td>
+                    <td>${candidate.score ?? "-"}</td>
+                    <td>${candidate.predicted_fit}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm"
+                                onclick="markFake(${candidate.application_id})">
+                                Mark Fake
+                        </button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    async function markFake(appId) {
+        await fetch(`/api/applications/${appId}/mark_fake/`, {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + access }
+        });
+        alert("Candidate marked as fake.");
+        loadCandidates();
+    }
+
+    async function replaceFakes() {
+        await fetch(`/api/offers/${OFFER_ID}/replace_fakes/`, {
+            method: "POST",
+            headers: { "Authorization": "Bearer " + access }
+        });
+
+        alert("Replacement completed.");
+        loadCandidates();
+    }
+
+    loadOffer();
+    loadCandidates();
+</script>
+
+</body>
+</html>

@@ -57,19 +57,40 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ["id", "user", "field_of_study", "gpa", "score", "skills", "certifications", "skill_ids", "cert_ids"]
 
 
-# ✅ OFFER (already exists — optional to extend)
+class CompanySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = "__all__"
+
+
 class OfferSerializer(serializers.ModelSerializer):
+    company = CompanySerializer(read_only=True)  
     required_skills = SkillSerializer(many=True, read_only=True)
-    skill_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Skill.objects.all(),
-        many=True,
+
+    skills = serializers.ListField(
+        child=serializers.CharField(),
         write_only=True,
-        source='required_skills'
+        required=False
     )
 
     class Meta:
         model = Offer
-        fields = ["id", "title", "company", "field_required", "description", "location", "required_skills", "skill_ids"]
+        fields = [
+            "id", "title", "description", "company",
+            "field_required", "level_required",
+            "location", "deadline", "is_closed",
+            "required_skills", "skills"
+        ]
+
+    def create(self, validated_data):
+        skills_list = validated_data.pop("skills", [])
+        offer = Offer.objects.create(**validated_data)
+
+        for s in skills_list:
+            skill, _ = Skill.objects.get_or_create(name=s.lower())
+            offer.required_skills.add(skill)
+
+        return offer
 
 
 # ✅ APPLICATION (already exists)
@@ -327,13 +348,3 @@ class EmailTokenObtainPairSerializer(serializers.Serializer):
                 "is_verified": profile.is_verified if profile else None,
             }
         }
-class CompanySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Company
-        fields = "__all__"
-
-
-class UniversitySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = University
-        fields = "__all__"
