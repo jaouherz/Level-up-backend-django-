@@ -129,40 +129,66 @@ class ApplicationViewSet(viewsets.GenericViewSet,
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.select_related('user').prefetch_related('skills', 'certifications')
     serializer_class = ProfileSerializer
-    permission_classes = [IsAuthenticated]  # 🔒 secure
+    permission_classes = [IsAuthenticated]
 
+   
     def create(self, request, *args, **kwargs):
-        """
-        Hardened: create/update ONLY the authenticated user's profile.
-        """
         user = request.user
         data = request.data
 
         profile, _ = Profile.objects.get_or_create(user=user)
-        profile.field_of_study = data.get("field_of_study", profile.field_of_study or "")
-        profile.gpa = data.get("gpa", profile.gpa or 0)
-        profile.score = data.get("score", profile.score or 0)
-        profile.role = data.get("role", profile.role or "student")
-        profile.save()
-
-        skill_names = data.get("skills", [])
-        cert_names = data.get("certifications", [])
-
-        skills = [Skill.objects.get_or_create(name=name)[0] for name in skill_names]
-        certs = [Certification.objects.get_or_create(name=name)[0] for name in cert_names]
-        profile.skills.set(skills)
-        profile.certifications.set(certs)
-        profile.save()
+        self._update_profile_fields(profile, data)
 
         return Response({
             "message": "Profile created/updated",
             "id": profile.id,
             "user": user.email,
             "role": profile.role,
-            "skills": [s.name for s in skills],
-            "certifications": [c.name for c in certs],
+            "skills": [s.name for s in profile.skills.all()],
+            "certifications": [c.name for c in profile.certifications.all()],
         })
 
+   
+    @action(detail=False, methods=["get"], url_path="my-profile")
+    def my_profile(self, request):
+        profile, _ = Profile.objects.get_or_create(user=request.user)
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
+    
+    @action(detail=False, methods=["patch"], url_path="update-my-profile")
+    def update_my_profile(self, request):
+        user = request.user
+        profile, _ = Profile.objects.get_or_create(user=user)
+
+        data = request.data
+        self._update_profile_fields(profile, data)
+
+        serializer = self.get_serializer(profile)
+        return Response({
+            "message": "Profile updated successfully",
+            "profile": serializer.data
+        })
+
+   
+    def _update_profile_fields(self, profile, data):
+        profile.field_of_study = data.get("field_of_study", profile.field_of_study)
+        #profile.gpa = data.get("gpa", profile.gpa)
+        #profile.score = data.get("score", profile.score)
+        #profile.role = data.get("role", profile.role)
+
+        profile.save()
+
+        if "skills" in data:
+            skills = [Skill.objects.get_or_create(name=s)[0] for s in data["skills"]]
+            profile.skills.set(skills)
+
+        if "certifications" in data:
+            certs = [Certification.objects.get_or_create(name=c)[0] for c in data["certifications"]]
+            profile.certifications.set(certs)
+
+        profile.save()
+        return profile
 
 # =========================
 # 📊 RANKING / REPLACEMENTS
