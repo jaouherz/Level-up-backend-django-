@@ -114,6 +114,14 @@ class ApplicationViewSet(viewsets.GenericViewSet,
             "id": app.id
         }, status=201 if created else 200)
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_applications(self, request):
+        user = request.user
+
+        apps = Application.objects.filter(user=user).select_related("offer").order_by("-id")
+
+        serializer = ApplicationSerializer(apps, many=True)
+        return Response(serializer.data)
 
 # =========================
 # 👤 PROFILES
@@ -224,7 +232,7 @@ def replace_fake_candidates(offer_id):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])  # 🔒 secure
+@permission_classes([IsAuthenticated])  
 def replace_fakes_api(request, offer_id):
     # Role check
     # if getattr(request.user.profile, "role", "student") not in ("recruiter", "admin"):
@@ -237,15 +245,13 @@ def replace_fakes_api(request, offer_id):
 class FeedbackViewSet(viewsets.ModelViewSet):
     queryset = Feedback.objects.select_related('application', 'recruiter').all()
     serializer_class = FeedbackSerializer
-    permission_classes = [IsAuthenticated]  # 🔒 secure
-
+    permission_classes = [IsAuthenticated]  
 
 
 class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.prefetch_related('required_skills').all()
     serializer_class = OfferSerializer
-    permission_classes = [IsAuthenticated]  # 🔒 secure
-
+    permission_classes = [IsAuthenticated] 
     def create(self, request, *args, **kwargs):
         user = request.user
         profile = user.profile
@@ -262,7 +268,7 @@ class OfferViewSet(viewsets.ModelViewSet):
         description = data.get("description", "")
         field_required = data.get("field_required")
         level_required = data.get("level_required", "intern")
-        skills_list = data.get("required_skills", [])  # Already a list from frontend
+        skills_list = data.get("required_skills", [])  
 
         if not title or not field_required:
             return Response({"error": "title and field_required are required"}, status=400)
@@ -272,11 +278,10 @@ class OfferViewSet(viewsets.ModelViewSet):
             description=description,
             field_required=field_required,
             level_required=level_required,
-            company=profile.company,  # ForeignKey now!
+            company=profile.company,  
             created_by=user
         )
 
-        # Attach skills
         skills = []
         for name in skills_list:
             skill, _ = Skill.objects.get_or_create(name=name)
@@ -316,21 +321,19 @@ class OfferViewSet(viewsets.ModelViewSet):
             return Response({"detail": "Only students can view recommendations."}, status=403)
 
         today = date.today()
-        offers = Offer.objects.filter(is_closed=False).all()
+        applied_offer_ids = Application.objects.filter(user=user).values_list("offer_id", flat=True)
+
+        offers = Offer.objects.filter(is_closed=False).exclude(id__in=applied_offer_ids)
 
         results = []
         for offer in offers:
             if offer.deadline and today > offer.deadline:
                 if not (offer.extended_deadline and today <= offer.extended_deadline):
                     continue
-
+            serialized_offer = OfferSerializer(offer).data  
             fit = predict_fit(profile, offer)
             results.append({
-                "id": offer.id,
-                "title": offer.title,
-                "company": offer.company.name if offer.company else None,
-                "field_required": offer.field_required,
-                "level_required": offer.level_required,
+                "offer": serialized_offer,
                 "predicted_fit": round(fit, 3),
             })
 
@@ -343,7 +346,6 @@ class OfferViewSet(viewsets.ModelViewSet):
         })
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def close(self, request, pk=None):
-        # (Optionally: restrict to offer owner or recruiter/admin)
         offer = self.get_object()
         offer.is_closed = True
         offer.closed_at = timezone.now()
@@ -422,7 +424,6 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        # serializer.save() already returns {"user": ..., "access": ..., "refresh": ...}
         payload = serializer.save()
 
         return Response(payload, status=status.HTTP_201_CREATED)
