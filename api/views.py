@@ -636,46 +636,7 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
         demand.reviewed_at = timezone.now()
         demand.save()
 
-        # === Generate PDF convention ===
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import A4
-        from django.core.mail import EmailMessage
-        from io import BytesIO
-
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=A4)
-
-        # ========== PDF CONTENT ==========
-        p.setFont("Helvetica", 16)
-        p.drawString(50, 800, "Convention de Stage")
-
-        p.setFont("Helvetica", 12)
-        p.drawString(50, 760, f"Université : {profile.university.name}")
-        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
-        p.drawString(50, 720, f"Entreprise : {demand.application.offer.company.name}")
-        p.drawString(50, 700, f"Offre : {demand.application.offer.title}")
-
-        p.drawString(50, 660, "Ce document confirme le stage de l'étudiant au sein de l'entreprise.")
-        p.drawString(50, 640, "Signature Université: _____________________")
-        p.drawString(50, 620, "Signature Entreprise: _____________________")
-        p.drawString(50, 600, "Signature Étudiant: _______________________")
-
-        p.showPage()
-        p.save()
-
-        buffer.seek(0)
-        pdf_file = buffer.getvalue()
-
-        # === EMAIL to student ===
-        email = EmailMessage(
-            subject="Votre Convention de Stage",
-            body="Votre demande est acceptée. Veuillez trouver la convention de stage en pièce jointe.",
-            to=[demand.student.email]
-        )
-        email.attach("Convention_de_Stage.pdf", pdf_file, "application/pdf")
-        email.send()
-
-        return Response({"message": "Demand approved. PDF sent to student."})
+        return Response({"message": "Demand approved. Student can now request documents."})
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def reject(self, request, pk=None):
@@ -745,35 +706,100 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
             "internship_demand": demand_data
         })
 
-    @action(detail=False, methods=['post'], url_path="request")
-    def request_papers(self, request):
-        user = request.user
-        profile = user.profile
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def generate_convention(self, request, pk=None):
+        demand = self.get_object()
 
-        if profile.role != "student":
-            return Response({"error": "Only students can request internship papers."}, status=403)
+        # Ensure ONLY the student can generate his own papers
+        if request.user != demand.student:
+            return Response({"error": "You can generate only your own internship documents."}, status=403)
 
-        app_id = request.data.get("application_id")
-        if not app_id:
-            return Response({"error": "application_id is required"}, status=400)
+        # Check if demand was accepted by university
+        if demand.status != "approved":
+            return Response({"error": "University has not approved this internship yet."}, status=400)
 
-        try:
-            app = Application.objects.get(id=app_id, user=user, status="accepted")
-        except Application.DoesNotExist:
-            return Response({"error": "You are not accepted for this internship."}, status=400)
+        # PDF generation logic (same as before)
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from django.core.mail import EmailMessage
+        from io import BytesIO
 
-        # Check if demand already exists
-        demand, created = InternshipDemand.objects.get_or_create(
-            application=app,
-            student=user,
-            university=profile.university,
-            defaults={"message": request.data.get("message", "")}
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+
+        p.setFont("Helvetica", 16)
+        p.drawString(50, 800, "Convention de Stage")
+
+        p.setFont("Helvetica", 12)
+        p.drawString(50, 760, f"Université : {demand.university.name}")
+        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+        p.drawString(50, 720, f"Entreprise : {demand.application.offer.company.name}")
+        p.drawString(50, 700, f"Offre : {demand.application.offer.title}")
+
+        p.drawString(50, 660, "Ce document confirme le stage de l'étudiant au sein de l'entreprise.")
+        p.drawString(50, 640, "Signature Université: _____________________")
+        p.drawString(50, 620, "Signature Entreprise: _____________________")
+        p.drawString(50, 600, "Signature Étudiant: _______________________")
+
+        p.showPage()
+        p.save()
+
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
+
+        # Send by email
+        email = EmailMessage(
+            subject="Convention de Stage",
+            body="Veuillez trouver ci-joint votre convention de stage.",
+            to=[request.user.email]
         )
+        email.attach("Convention_de_Stage.pdf", pdf_data, "application/pdf")
+        email.send()
 
-        if not created:
-            return Response({"message": "Demand already sent.", "demand_id": demand.id})
+        return Response({"message": "Convention sent by email."})
 
-        return Response({
-            "message": "Internship papers request sent to university.",
-            "demand_id": demand.id
-        }, status=201)
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def generate_letter(self, request, pk=None):
+        demand = self.get_object()
+
+        if request.user != demand.student:
+            return Response({"error": "You can generate only your own internship documents."}, status=403)
+
+        if demand.status != "approved":
+            return Response({"error": "University has not approved this internship yet."}, status=400)
+
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from django.core.mail import EmailMessage
+        from io import BytesIO
+
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+
+        p.setFont("Helvetica", 16)
+        p.drawString(50, 800, "Lettre d'Affectation")
+
+        p.setFont("Helvetica", 12)
+        p.drawString(50, 760, f"Université : {demand.university.name}")
+        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+        p.drawString(50, 720, f"Affectation : {demand.application.offer.company.name}")
+
+        p.drawString(50, 700, "L'étudiant est affecté officiellement à l'entreprise susmentionnée.")
+        p.drawString(50, 680, "Signature de l'Université : ____________________")
+
+        p.showPage()
+        p.save()
+
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
+
+        email = EmailMessage(
+            subject="Lettre d'Affectation",
+            body="Veuillez trouver ci-joint votre lettre d’affectation.",
+            to=[request.user.email]
+        )
+        email.attach("Lettre_Affectation.pdf", pdf_data, "application/pdf")
+        email.send()
+
+        return Response({"message": "Lettre d'affectation sent by email."})
+
