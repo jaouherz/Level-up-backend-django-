@@ -625,19 +625,57 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(demands, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    @action(detail=True, methods=['post'])
     def approve(self, request, pk=None):
         profile = request.user.profile
-
         if profile.role != "university":
-            return Response({"error": "Only university users can approve demands."}, status=403)
+            return Response({"error": "Only university can approve demands."}, status=403)
 
         demand = self.get_object()
         demand.status = "approved"
         demand.reviewed_at = timezone.now()
         demand.save()
 
-        return Response({"message": "Internship demand approved."})
+        # === Generate PDF convention ===
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from django.core.mail import EmailMessage
+        from io import BytesIO
+
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+
+        # ========== PDF CONTENT ==========
+        p.setFont("Helvetica", 16)
+        p.drawString(50, 800, "Convention de Stage")
+
+        p.setFont("Helvetica", 12)
+        p.drawString(50, 760, f"Université : {profile.university.name}")
+        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+        p.drawString(50, 720, f"Entreprise : {demand.application.offer.company.name}")
+        p.drawString(50, 700, f"Offre : {demand.application.offer.title}")
+
+        p.drawString(50, 660, "Ce document confirme le stage de l'étudiant au sein de l'entreprise.")
+        p.drawString(50, 640, "Signature Université: _____________________")
+        p.drawString(50, 620, "Signature Entreprise: _____________________")
+        p.drawString(50, 600, "Signature Étudiant: _______________________")
+
+        p.showPage()
+        p.save()
+
+        buffer.seek(0)
+        pdf_file = buffer.getvalue()
+
+        # === EMAIL to student ===
+        email = EmailMessage(
+            subject="Votre Convention de Stage",
+            body="Votre demande est acceptée. Veuillez trouver la convention de stage en pièce jointe.",
+            to=[demand.student.email]
+        )
+        email.attach("Convention_de_Stage.pdf", pdf_file, "application/pdf")
+        email.send()
+
+        return Response({"message": "Demand approved. PDF sent to student."})
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def reject(self, request, pk=None):
@@ -652,3 +690,90 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
         demand.save()
 
         return Response({"message": "Internship demand rejected."})
+
+    @action(detail=False, methods=['get'], url_path="student/(?P<student_id>[^/.]+)/details")
+    def student_details(self, request, student_id=None):
+        # only university can access
+        profile = request.user.profile
+        if profile.role != "university":
+            return Response({"error": "Only university users can access this."}, status=403)
+
+        # get student
+        try:
+            student_user = User.objects.get(id=student_id)
+        except User.DoesNotExist:
+            return Response({"error": "Student not found"}, status=404)
+
+        # only show if student belongs to this university
+        if student_user.profile.university != profile.university:
+            return Response({"error": "This student does not belong to your university"}, status=403)
+
+        # accepted applications
+        apps = Application.objects.filter(user=student_user, status="accepted")
+
+        apps_serialized = []
+        for app in apps:
+            apps_serialized.append({
+                "id": app.id,
+                "offer_title": app.offer.title,
+                "company": app.offer.company.name,
+                "field_required": app.offer.field_required,
+                "level_required": app.offer.level_required,
+                "predicted_fit": app.predicted_fit,
+            })
+
+        # demand (if exists)
+        demand = InternshipDemand.objects.filter(student=student_user).first()
+        demand_data = None
+        if demand:
+            demand_data = {
+                "id": demand.id,
+                "status": demand.status,
+                "created_at": demand.created_at,
+                "reviewed_at": demand.reviewed_at,
+            }
+
+        return Response({
+            "student": {
+                "id": student_user.id,
+                "email": student_user.email,
+                "field_of_study": student_user.profile.field_of_study,
+                "gpa": student_user.profile.gpa,
+                "score": student_user.profile.score
+            },
+            "accepted_applications": apps_serialized,
+            "internship_demand": demand_data
+        })
+
+    @action(detail=False, methods=['post'], url_path="request")
+    def request_papers(self, request):
+        user = request.user
+        profile = user.profile
+
+        if profile.role != "student":
+            return Response({"error": "Only students can request internship papers."}, status=403)
+
+        app_id = request.data.get("application_id")
+        if not app_id:
+            return Response({"error": "application_id is required"}, status=400)
+
+        try:
+            app = Application.objects.get(id=app_id, user=user, status="accepted")
+        except Application.DoesNotExist:
+            return Response({"error": "You are not accepted for this internship."}, status=400)
+
+        # Check if demand already exists
+        demand, created = InternshipDemand.objects.get_or_create(
+            application=app,
+            student=user,
+            university=profile.university,
+            defaults={"message": request.data.get("message", "")}
+        )
+
+        if not created:
+            return Response({"message": "Demand already sent.", "demand_id": demand.id})
+
+        return Response({
+            "message": "Internship papers request sent to university.",
+            "demand_id": demand.id
+        }, status=201)
