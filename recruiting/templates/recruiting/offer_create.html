@@ -2,60 +2,408 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Create Offer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Offer - TalentHub</title>
 
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --darker: #111827;
+            --light: #f8fafc;
+            --gray: #6b7280;
+            --gray-light: #e5e7eb;
+            --accent: #8b5cf6;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-dark: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 0;
+        }
+
+        .modern-container {
+           /* max-width: 800px;*/
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header Styles */
+        .page-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        /* Button Styles */
+        .btn-modern {
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 50px;
+            padding: 14px 32px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-lg);
+            color: white;
+        }
+
+        .btn-modern-secondary {
+            background: var(--gradient-dark);
+        }
+
+        /* Form Styles */
+        .form-glass {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .form-group {
+            margin-bottom: 2rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            color: var(--dark);
+            font-size: 0.95rem;
+        }
+
+        .form-control-modern {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid rgba(0, 0, 0, 0.1);
+            border-radius: var(--border-radius-sm);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.8);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .form-control-modern:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+        }
+
+        .form-control-modern::placeholder {
+            color: var(--gray);
+            opacity: 0.7;
+        }
+
+        /* Skill Tags */
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .skill-tag {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 50px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .skill-tag .remove {
+            cursor: pointer;
+            opacity: 0.8;
+            transition: var(--transition);
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+        }
+
+        .skill-tag .remove:hover {
+            opacity: 1;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Input Group */
+        .input-group-modern {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .input-group-modern input {
+            flex: 1;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        /* Loading State */
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+        }
+
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            margin-left: -10px;
+            margin-top: -10px;
+            border: 2px solid transparent;
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .modern-container {
+                padding: 1rem;
+            }
+            
+            .page-header {
+                padding: 1.5rem;
+            }
+            
+            .form-glass {
+                padding: 2rem 1.5rem;
+            }
+            
+            .input-group-modern {
+                flex-direction: column;
+            }
+        }
+
+        /* Custom Select Styling */
+        select.form-control-modern {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 1rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 3rem;
+        }
+    </style>
 </head>
 
-<body class="p-4">
+<body>
+<div class="modern-container fade-in">
+    <!-- Back Button -->
+    <a href="/recruiting/offers/" class="btn-modern-secondary btn-modern mb-4">
+        <i class="fas fa-arrow-left me-2"></i>Back to Offers
+    </a>
 
-<div class="container mt-4" style="max-width: 650px;">
+    <!-- Header -->
+    <div class="page-header text-center">
+        <h1 class="text-white mb-3"><i class="fas fa-plus-circle me-3"></i>Create New Offer</h1>
+        <p class="text-white-50 mb-0">Fill in the details below to create a new job offer</p>
+    </div>
 
-    <a href="/recruiting/offers/" class="btn btn-secondary mb-3">← Back</a>
+    <!-- Form -->
+    <div class="form-glass fade-in" style="animation-delay: 0.1s">
+        <form id="offerForm">
+            <!-- Job Title -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-heading me-2 text-primary"></i>Job Title
+                </label>
+                <input class="form-control-modern" id="title" 
+                       placeholder="e.g. Senior Frontend Developer, Data Scientist, Product Manager..." required>
+            </div>
 
-    <h2>Create New Offer</h2>
+            <!-- Job Description -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-file-alt me-2 text-success"></i>Job Description
+                </label>
+                <textarea class="form-control-modern" id="description" rows="6" 
+                          placeholder="Describe the role, responsibilities, requirements, and what makes this position exciting..." required></textarea>
+            </div>
 
-    <form id="offerForm" class="mt-4">
+            <!-- Field and Level -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-graduation-cap me-2 text-warning"></i>Field Required
+                        </label>
+                        <input class="form-control-modern" id="field_required" 
+                               placeholder="e.g. Computer Science, Business, Engineering..." required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label class="form-label">
+                            <i class="fas fa-chart-line me-2 text-info"></i>Experience Level
+                        </label>
+                        <select class="form-control-modern" id="level_required">
+                            <option value="intern">Internship</option>
+                            <option value="junior">Junior</option>
+                            <option value="mid">Mid-Level</option>
+                            <option value="senior">Senior</option>
+                            <option value="lead">Lead</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
 
-        <input class="form-control mb-3" id="title" placeholder="Title" required>
+            <!-- Required Skills -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-tools me-2 text-danger"></i>Required Skills
+                </label>
+                <select id="skillsSelect" class="form-control-modern" multiple style="height: 140px;">
+                    <!-- Skills will be loaded here -->
+                </select>
+                <div class="form-text text-muted mt-2">
+                    <i class="fas fa-info-circle me-1"></i>Hold Ctrl/Cmd to select multiple skills
+                </div>
+            </div>
 
-        <textarea class="form-control mb-3" id="description"
-                  rows="4" placeholder="Offer Description" required></textarea>
+            <!-- Add New Skill -->
+            <div class="form-group">
+                <label class="form-label">
+                    <i class="fas fa-plus-circle me-2 text-success"></i>Add New Skill
+                </label>
+                <div class="input-group-modern">
+                    <input id="newSkill" class="form-control-modern" placeholder="Enter a new skill (e.g. React, Python, UX Design)...">
+                    <button type="button" class="btn-modern" id="addSkillBtn">
+                        <i class="fas fa-plus"></i>Add Skill
+                    </button>
+                </div>
+            </div>
 
-        <input class="form-control mb-3" id="field_required" placeholder="Field Required" required>
+            <!-- Selected Skills Display -->
+            <div class="form-group">
+                <label class="form-label">Selected Skills</label>
+                <div id="selectedSkills" class="skill-tags">
+                    <span class="text-muted">No skills selected yet</span>
+                </div>
+            </div>
 
-        <select class="form-control mb-3" id="level_required">
-            <option value="intern">Internship</option>
-            <option value="junior">Junior</option>
-            <option value="senior">Senior</option>
-        </select>
-
-        <label><strong>Required Skills</strong></label>
-        <select id="skillsSelect" class="form-control mb-3" multiple></select>
-
-        <div class="input-group mb-3">
-            <input id="newSkill" class="form-control" placeholder="Add new skill...">
-            <button type="button" class="btn btn-outline-primary" id="addSkillBtn">Add</button>
-        </div>
-
-        <button class="btn btn-success w-100" type="submit">Create Offer</button>
-
-    </form>
-
+            <!-- Submit Button -->
+            <div class="form-group mt-4">
+                <button class="btn-modern w-100 py-3 fs-5" type="submit" id="submitBtn">
+                    <i class="fas fa-rocket me-2"></i>Create Job Offer
+                </button>
+            </div>
+        </form>
+    </div>
 </div>
 
 <script>
     const access = localStorage.getItem("access");
     if (!access) window.location.href = "/api/auth/jwt-login/";
 
-    // Load skills from backend
+    let allSkills = [];
+
     async function loadSkills() {
         const res = await fetch("/api/skills/", {
             headers: { "Authorization": "Bearer " + access }
         });
 
         const skills = await res.json();
+        allSkills = skills;
         const select = document.getElementById("skillsSelect");
         select.innerHTML = "";
 
@@ -64,41 +412,93 @@
         });
     }
 
-    loadSkills();
+    function updateSelectedSkills() {
+        const selected = Array.from(document.getElementById("skillsSelect").selectedOptions);
+        const container = document.getElementById("selectedSkills");
+        
+        if (selected.length === 0) {
+            container.innerHTML = '<span class="text-muted">No skills selected yet</span>';
+            return;
+        }
+        
+        container.innerHTML = selected.map(opt => `
+            <span class="skill-tag">
+                ${opt.value}
+                <span class="remove" onclick="deselectSkill('${opt.value}')">×</span>
+            </span>
+        `).join('');
+    }
 
-    // Add new skill (prevent duplicates)
+    function deselectSkill(skillName) {
+        const select = document.getElementById("skillsSelect");
+        const options = Array.from(select.options);
+        const option = options.find(opt => opt.value === skillName);
+        if (option) option.selected = false;
+        updateSelectedSkills();
+    }
+
+    document.getElementById("skillsSelect").addEventListener("change", updateSelectedSkills);
+
     document.getElementById("addSkillBtn").addEventListener("click", async () => {
-        const newSkill = document.getElementById("newSkill").value.trim();
+        const newSkillInput = document.getElementById("newSkill");
+        const newSkill = newSkillInput.value.trim();
 
-        if (!newSkill) return alert("Enter a skill name.");
-
-        const existing = Array
-            .from(document.querySelectorAll("#skillsSelect option"))
-            .map(opt => opt.value.toLowerCase());
-
-        if (existing.includes(newSkill.toLowerCase())) {
-            return alert("❌ Skill already exists!");
+        if (!newSkill) {
+            newSkillInput.classList.add('shake');
+            setTimeout(() => newSkillInput.classList.remove('shake'), 500);
+            return alert("Please enter a skill name.");
         }
 
-        const res = await fetch("/api/skills/", {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + access,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ name: newSkill })
-        });
+        const existing = allSkills.map(skill => skill.name.toLowerCase());
+        if (existing.includes(newSkill.toLowerCase())) {
+            newSkillInput.classList.add('shake');
+            setTimeout(() => newSkillInput.classList.remove('shake'), 500);
+            return alert("This skill already exists in the list!");
+        }
 
-        if (res.ok) {
-            alert("✅ Skill added!");
-            document.getElementById("newSkill").value = "";
-            loadSkills();
-        } else {
-            alert("Error adding skill.");
+        const addBtn = document.getElementById("addSkillBtn");
+        const originalText = addBtn.innerHTML;
+        addBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Adding...';
+        addBtn.disabled = true;
+
+        try {
+            const res = await fetch("/api/skills/", {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + access,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ name: newSkill })
+            });
+
+            if (res.ok) {
+                newSkillInput.value = "";
+                await loadSkills();
+                
+                // Select the newly added skill
+                const select = document.getElementById("skillsSelect");
+                const newOption = Array.from(select.options).find(opt => opt.value === newSkill);
+                if (newOption) {
+                    newOption.selected = true;
+                    updateSelectedSkills();
+                }
+                
+                // Visual feedback
+                addBtn.innerHTML = '<i class="fas fa-check"></i>Added!';
+                setTimeout(() => {
+                    addBtn.innerHTML = originalText;
+                    addBtn.disabled = false;
+                }, 1000);
+            } else {
+                throw new Error('Failed to add skill');
+            }
+        } catch (error) {
+            alert("Error adding skill. Please try again.");
+            addBtn.innerHTML = originalText;
+            addBtn.disabled = false;
         }
     });
 
-    // Create the offer
     document.getElementById("offerForm").addEventListener("submit", async (e) => {
         e.preventDefault();
 
@@ -107,32 +507,49 @@
             .map(opt => opt.value);
 
         const body = {
-            title: title.value,
-            description: description.value,
-            field_required: field_required.value,
-            level_required: level_required.value,
+            title: document.getElementById("title").value,
+            description: document.getElementById("description").value,
+            field_required: document.getElementById("field_required").value,
+            level_required: document.getElementById("level_required").value,
             required_skills: selectedSkills
         };
 
-        const res = await fetch("/api/offers/", {
-            method: "POST",
-            headers: {
-                "Authorization": "Bearer " + access,
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(body)
-        });
+        const submitBtn = document.getElementById("submitBtn");
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
 
-        if (res.ok) {
-            alert("Offer created!");
-            window.location.href = "/recruiting/offers/";
-        } else {
-            const data = await res.json();
-            alert("Error: " + JSON.stringify(data));
+        try {
+            const res = await fetch("/api/offers/", {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer " + access,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (res.ok) {
+                // Success animation
+                submitBtn.innerHTML = '<i class="fas fa-check"></i>Offer Created!';
+                submitBtn.style.background = 'var(--gradient-success)';
+                
+                setTimeout(() => {
+                    window.location.href = "/recruiting/offers/";
+                }, 1000);
+            } else {
+                const data = await res.json();
+                throw new Error(JSON.stringify(data));
+            }
+        } catch (error) {
+            alert("Error creating offer: " + error.message);
+            submitBtn.classList.remove('btn-loading');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-rocket me-2"></i>Create Job Offer';
         }
     });
 
+    // Initialize
+    loadSkills();
 </script>
-
 </body>
 </html>

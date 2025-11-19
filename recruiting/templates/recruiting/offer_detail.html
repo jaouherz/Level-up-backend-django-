@@ -2,37 +2,361 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Offer Details</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offer Details - TalentHub</title>
 
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --primary-light: #a5b4fc;
+            --secondary: #f59e0b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --dark: #1f2937;
+            --darker: #111827;
+            --light: #f8fafc;
+            --gray: #6b7280;
+            --gray-light: #e5e7eb;
+            --accent: #8b5cf6;
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --gradient-warning: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            --gradient-danger: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            --gradient-dark: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.12);
+            --shadow-lg: 0 20px 60px rgba(0, 0, 0, 0.15);
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: var(--dark);
+            line-height: 1.6;
+            padding: 0;
+        }
+
+        .modern-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Header Styles */
+        .page-header {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .page-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+
+        /* Button Styles */
+        .btn-modern {
+            background: var(--gradient-primary);
+            border: none;
+            border-radius: 50px;
+            padding: 12px 28px;
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+            box-shadow: var(--shadow-md);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-modern:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+            color: white;
+        }
+
+        .btn-modern-secondary {
+            background: var(--gradient-dark);
+            border-radius: 10px;
+
+           
+        }
+
+        .btn-modern-warning {
+            border-radius: 10px;
+            padding: 10px;
+            background: var(--gradient-warning);
+            color: var(--dark);
+        }
+
+        .btn-modern-danger {
+            background: var(--gradient-danger);
+        }
+
+        .btn-sm {
+            padding: 8px 20px;
+            font-size: 0.85rem;
+        }
+
+        /* Card Styles */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            overflow: hidden;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Table Styles */
+        .modern-table {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .modern-table table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 0;
+        }
+
+        .modern-table th {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 1.25rem 1.5rem;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .modern-table td {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .modern-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .modern-table tr:hover td {
+            background: rgba(67, 97, 238, 0.05);
+        }
+
+        /* Fit Badges */
+        .fit-badge {
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .fit-excellent {
+            background: var(--gradient-success);
+            color: white;
+        }
+
+        .fit-good {
+            background: var(--gradient-warning);
+            color: var(--dark);
+        }
+
+        .fit-poor {
+            background: var(--gradient-danger);
+            color: white;
+        }
+
+        /* Info Grid */
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .info-item {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: var(--border-radius-sm);
+            padding: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .info-item label {
+            display: block;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .info-item .value {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        /* Loading */
+        .loading-spinner {
+            width: 3rem;
+            height: 3rem;
+            border-width: 3px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .modern-container {
+                padding: 1rem;
+            }
+            
+            .page-header {
+                padding: 1.5rem;
+            }
+            
+            .modern-table {
+                overflow-x: auto;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+    </style>
 </head>
 
-<body class="p-4">
+<body>
+<div class="modern-container fade-in">
+    <!-- Back Button -->
+    <a href="/recruiting/offers/" class="btn-modern-secondary btn-modern mb-4">
+        <i class="fas fa-arrow-left me-2"></i>Back to Offers
+    </a>
 
-<div class="container mt-4">
-    <a href="/recruiting/offers/" class="btn btn-secondary mb-3">← Back to Offers</a>
+    <!-- Offer Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h1 class="text-white mb-2"><i class="fas fa-file-alt me-3"></i>Offer Details</h1>
+                <p class="text-white-50 mb-0">View offer information and manage candidates</p>
+            </div>
+            <div class="col-auto">
+                <button class="btn-modern-warning btn-modern" onclick="replaceFakes()">
+                    <i class="fas fa-sync-alt me-2"></i>Replace Fake Candidates
+                </button>
+            </div>
+        </div>
+    </div>
 
-    <h2>Offer Details</h2>
-    <div id="offerInfo" class="mt-3 p-3 bg-light rounded shadow-sm"></div>
+    <!-- Offer Information -->
+    <div class="glass-card p-4 mb-4 fade-in" style="animation-delay: 0.1s">
+        <h3 class="mb-4"><i class="fas fa-info-circle me-2 text-primary"></i>Offer Information</h3>
+        <div id="offerInfo" class="info-grid"></div>
+    </div>
 
-    <h3 class="mt-4">Candidates</h3>
-    <button class="btn btn-warning mb-3" onclick="replaceFakes()">Replace Fake Candidates</button>
+    <!-- Candidates Section -->
+    <div class="glass-card p-4 fade-in" style="animation-delay: 0.2s">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3 class="mb-0"><i class="fas fa-users me-2 text-success"></i>Candidates</h3>
+            <span class="badge bg-primary fs-6" id="candidateCount">0 candidates</span>
+        </div>
 
-    <table class="table table-bordered mt-3">
-        <thead>
-            <tr>
-                <th>Email</th>
-                <th>Field</th>
-                <th>GPA</th>
-                <th>Score</th>
-                <th>Predicted Fit</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody id="candidatesTable"></tbody>
-    </table>
+        <div class="modern-table">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Candidate</th>
+                        <th>Field</th>
+                        <th>GPA</th>
+                        <th>Score</th>
+                        <th>Predicted Fit</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="candidatesTable"></tbody>
+            </table>
+        </div>
 
+        <div id="candidatesLoading" class="text-center py-5">
+            <div class="loading-spinner spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading candidates...</span>
+            </div>
+            <p class="mt-3 text-muted">Loading candidates...</p>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -48,10 +372,22 @@
         const offer = await res.json();
 
         document.getElementById("offerInfo").innerHTML = `
-            <h4>${offer.title}</h4>
-            <p><strong>Company:</strong> ${offer.company}</p>
-            <p><strong>Field Required:</strong> ${offer.field_required}</p>
-            <p><strong>Level:</strong> ${offer.level_required}</p>
+            <div class="info-item">
+                <label>Job Title</label>
+                <div class="value">${offer.title}</div>
+            </div>
+            <div class="info-item">
+                <label>Company</label>
+                <div class="value">${offer.company}</div>
+            </div>
+            <div class="info-item">
+                <label>Field Required</label>
+                <div class="value">${offer.field_required}</div>
+            </div>
+            <div class="info-item">
+                <label>Level Required</label>
+                <div class="value">${offer.level_required}</div>
+            </div>
         `;
     }
 
@@ -62,20 +398,61 @@
         const data = await res.json();
 
         const tbody = document.getElementById("candidatesTable");
+        const loading = document.getElementById("candidatesLoading");
+        
+        loading.style.display = 'none';
         tbody.innerHTML = "";
 
-        data.candidates.forEach(candidate => {
-            tbody.innerHTML += `
+        // Update candidate count
+        document.getElementById('candidateCount').textContent = `${data.candidates?.length || 0} candidates`;
+
+        if (!data.candidates || data.candidates.length === 0) {
+            tbody.innerHTML = `
                 <tr>
-                    <td>${candidate.email}</td>
-                    <td>${candidate.field_of_study ?? "-"}</td>
-                    <td>${candidate.gpa ?? "-"}</td>
-                    <td>${candidate.score ?? "-"}</td>
-                    <td>${candidate.predicted_fit}</td>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="fas fa-users fa-2x mb-3 opacity-50"></i>
+                        <p>No candidates have applied yet.</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.candidates.forEach((candidate, index) => {
+            const fitClass = candidate.predicted_fit >= 80 ? 'fit-excellent' : 
+                           candidate.predicted_fit >= 60 ? 'fit-good' : 'fit-poor';
+            
+            tbody.innerHTML += `
+                <tr class="fade-in" style="animation-delay: ${index * 0.05}s">
                     <td>
-                        <button class="btn btn-danger btn-sm"
-                                onclick="markFake(${candidate.application_id})">
-                                Mark Fake
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                 style="width: 40px; height: 40px; background: var(--gradient-primary) !important;">
+                                <i class="fas fa-user text-white"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">${candidate.email}</div>
+                                <small class="text-muted">Candidate</small>
+                            </div>
+                        </div>
+                    </td>
+                    <td>${candidate.field_of_study ?? "-"}</td>
+                    <td>
+                        <span class="badge bg-light text-dark fs-6">${candidate.gpa ?? "-"}</span>
+                    </td>
+                    <td>
+                        <span class="badge bg-primary fs-6">${candidate.score ?? "-"}</span>
+                    </td>
+                    <td>
+                        <span class="fit-badge ${fitClass}">
+                            ${candidate.predicted_fit}% Match
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn-modern-danger btn-modern btn-sm" style="border-radius: 16px;"
+                                onclick="markFake(${candidate.application_id})"
+                                title="Mark as fake candidate">
+                            <i class="fas fa-ban me-1"></i>Mark Fake
                         </button>
                     </td>
                 </tr>
@@ -84,27 +461,38 @@
     }
 
     async function markFake(appId) {
-        await fetch(`/api/applications/${appId}/mark_fake/`, {
-            method: "POST",
-            headers: { "Authorization": "Bearer " + access }
-        });
-        alert("Candidate marked as fake.");
-        loadCandidates();
+        if (!confirm("Are you sure you want to mark this candidate as fake? This action cannot be undone.")) return;
+        
+        try {
+            await fetch(`/api/applications/${appId}/mark_fake/`, {
+                method: "POST",
+                headers: { "Authorization": "Bearer " + access }
+            });
+            alert("Candidate marked as fake successfully.");
+            loadCandidates();
+        } catch (error) {
+            alert("Error marking candidate as fake. Please try again.");
+        }
     }
 
     async function replaceFakes() {
-        await fetch(`/api/offers/${OFFER_ID}/replace_fakes/`, {
-            method: "POST",
-            headers: { "Authorization": "Bearer " + access }
-        });
-
-        alert("Replacement completed.");
-        loadCandidates();
+        if (!confirm("This will replace all fake candidates with new ones. Continue?")) return;
+        
+        try {
+            await fetch(`/api/offers/${OFFER_ID}/replace_fakes/`, {
+                method: "POST",
+                headers: { "Authorization": "Bearer " + access }
+            });
+            alert("Fake candidates replacement completed.");
+            loadCandidates();
+        } catch (error) {
+            alert("Error replacing fake candidates. Please try again.");
+        }
     }
 
+    // Load data
     loadOffer();
     loadCandidates();
 </script>
-
 </body>
 </html>
