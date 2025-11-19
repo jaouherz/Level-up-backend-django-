@@ -21,12 +21,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from api.models import (
     Application, Offer, Profile, Skill, Certification,
-    University, ScoreHistory, Feedback, Company
+    University, ScoreHistory, Feedback, Company, InternshipDemand
 )
 from api.serializers import (
     ApplicationSerializer, ProfileSerializer, OfferSerializer,
     SkillSerializer, CertificationSerializer, UniversitySerializer,
-    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, EmailTokenObtainPairSerializer, CompanySerializer
+    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, EmailTokenObtainPairSerializer, CompanySerializer,
+    InternshipDemandSerializer
 )
 from api.ml_utils import predict_fit
 
@@ -122,6 +123,41 @@ class ApplicationViewSet(viewsets.GenericViewSet,
 
         serializer = ApplicationSerializer(apps, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def accept(self, request, pk=None):
+        """Recruiter accepts a student application."""
+        app = self.get_object()
+        profile = request.user.profile
+
+        if profile.role != "recruiter":
+            return Response({"error": "Only recruiters can accept applications."}, status=403)
+
+        if app.offer.company != profile.company:
+            return Response({"error": "You are not allowed to manage this offer."}, status=403)
+
+        app.status = "accepted"
+        app.save()
+
+        return Response({"message": f"Application of {app.user.email} accepted for {app.offer.title}."})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reject(self, request, pk=None):
+        """Recruiter rejects a student application."""
+        app = self.get_object()
+        profile = request.user.profile
+
+        if profile.role != "recruiter":
+            return Response({"error": "Only recruiters can reject applications."}, status=403)
+
+        if app.offer.company != profile.company:
+            return Response({"error": "You are not allowed to manage this offer."}, status=403)
+
+        app.status = "rejected"
+        app.save()
+
+        return Response({"message": f"Application of {app.user.email} rejected for {app.offer.title}."})
+
 
 # =========================
 # 👤 PROFILES
@@ -524,3 +560,95 @@ class CompanyViewSet(viewsets.ModelViewSet):
     serializer_class = CompanySerializer
     permission_classes = [permissions.AllowAny]
 
+class InternshipDemandViewSet(viewsets.ModelViewSet):
+    queryset = InternshipDemand.objects.select_related("student", "application", "university")
+    serializer_class = InternshipDemandSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def accepted(self, request):
+        user = request.user
+        apps = Application.objects.filter(user=user, status="accepted")
+        serializer = ApplicationSerializer(apps, many=True)
+        return Response(serializer.data)
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        profile = user.profile
+
+        if profile.role != "student":
+            return Response({"error": "Only students can submit internship demands."}, status=403)
+
+        application_id = request.data.get("application_id")
+        if not application_id:
+            return Response({"error": "application_id is required"}, status=400)
+
+        try:
+            app = Application.objects.get(id=application_id, user=user, status="accepted")
+        except Application.DoesNotExist:
+            return Response({"error": "Valid accepted application not found"}, status=404)
+
+        if hasattr(app, "internship_demand"):
+            return Response({"error": "Demand already exists for this application"}, status=400)
+
+        if not profile.university:
+            return Response({"error": "Student is not assigned to a university."}, status=400)
+
+        demand = InternshipDemand.objects.create(
+            student=user,
+            application=app,
+            university=profile.university
+        )
+
+        serializer = self.get_serializer(demand)
+        return Response(serializer.data, status=201)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_demands(self, request):
+        """ Student → list all internship demands """
+        user = request.user
+        demands = InternshipDemand.objects.filter(student=user)
+        serializer = self.get_serializer(demands, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def university_demands(self, request):
+        """ University → list all demands from students belonging to that university """
+        profile = request.user.profile
+
+        if profile.role != "university":
+            return Response({"error": "Only university users can access this."}, status=403)
+
+        if not profile.university:
+            return Response({"error": "University not found for this user"}, status=400)
+
+        demands = InternshipDemand.objects.filter(university=profile.university)
+        serializer = self.get_serializer(demands, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def approve(self, request, pk=None):
+        profile = request.user.profile
+
+        if profile.role != "university":
+            return Response({"error": "Only university users can approve demands."}, status=403)
+
+        demand = self.get_object()
+        demand.status = "approved"
+        demand.reviewed_at = timezone.now()
+        demand.save()
+
+        return Response({"message": "Internship demand approved."})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reject(self, request, pk=None):
+        profile = request.user.profile
+
+        if profile.role != "university":
+            return Response({"error": "Only university users can reject demands."}, status=403)
+
+        demand = self.get_object()
+        demand.status = "rejected"
+        demand.reviewed_at = timezone.now()
+        demand.save()
+
+        return Response({"message": "Internship demand rejected."})
