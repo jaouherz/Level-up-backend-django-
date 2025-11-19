@@ -5,7 +5,8 @@ from api.views import (
     ApplicationViewSet, ProfileViewSet, OfferViewSet, ranked_candidates,
     CertificationViewSet, UniversityViewSet, ScoreHistoryViewSet,
     replace_fakes_api, FeedbackViewSet, RegisterView, EmailTokenObtainPairView,
-    approve_user, pending_users, html_jwt_login, html_jwt_register, CompanyViewSet, html_logout, SkillViewSet
+    approve_user, pending_users, html_jwt_login, html_jwt_register, CompanyViewSet, html_logout, SkillViewSet,
+    InternshipDemandViewSet
 )
 
 router = DefaultRouter()
@@ -18,6 +19,8 @@ router.register(r'score-history', ScoreHistoryViewSet, basename='score-history')
 router.register(r'feedbacks', FeedbackViewSet, basename='feedbacks')
 router.register(r'skills', SkillViewSet, basename='skills')
 router.register(r"universities", UniversityViewSet)
+router.register(r'internship-demands', InternshipDemandViewSet, basename='internship-demands')
+router.register(r'companies', CompanyViewSet, basename='companies')
 
 
 urlpatterns = [

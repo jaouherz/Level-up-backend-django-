@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Your Students</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+
+<body class="p-4">
+
+<h2 class="mb-3">Students in Your University</h2>
+<input class="form-control mb-3" id="search" placeholder="Search student...">
+
+<div id="studentContainer"></div>
+
+<script>
+const token = localStorage.getItem("access");
+
+async function loadStudents() {
+    const res = await fetch("/api/profiles/", {
+        headers: { "Authorization": "Bearer " + token }
+    });
+    let students = await res.json();
+
+    students = students.filter(p => p.role === "student");
+
+    const q = document.getElementById("search").value.toLowerCase();
+    students = students.filter(s =>
+        s.user.email.toLowerCase().includes(q)
+    );
+
+    const container = document.getElementById("studentContainer");
+    container.innerHTML = "";
+
+    students.forEach(s => {
+        container.innerHTML += `
+            <div class="card mb-2 shadow">
+                <div class="card-body">
+                    <h5>${s.user.email}</h5>
+                    <p>Field: ${s.field_of_study}</p>
+                    <a href="/recruiting/university/student/${s.user.id}/" class="btn btn-primary">
+                      View Profile
+                    </a>
+                </div>
+            </div>
+        `;
+    });
+}
+
+document.getElementById("search").addEventListener("input", loadStudents);
+loadStudents();
+</script>
+
+</body>
+</html>

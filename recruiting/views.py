@@ -44,3 +44,9 @@ def recruiter_create_offer(request):
     with Authorization: Bearer <access_token>.
     """
     return render(request, "recruiting/offer_create.html")
+def university_demands_page(request):
+    return render(request, "university/demands.html")
+def university_students_page(request):
+    return render(request, "university/students.html")
+def university_student_detail_page(request, id):
+    return render(request, "university/student_detail.html", {"student_id": id})

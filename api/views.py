@@ -21,12 +21,13 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from api.models import (
     Application, Offer, Profile, Skill, Certification,
-    University, ScoreHistory, Feedback, Company
+    University, ScoreHistory, Feedback, Company, InternshipDemand
 )
 from api.serializers import (
     ApplicationSerializer, ProfileSerializer, OfferSerializer,
     SkillSerializer, CertificationSerializer, UniversitySerializer,
-    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, EmailTokenObtainPairSerializer, CompanySerializer
+    ScoreHistorySerializer, FeedbackSerializer, RegisterSerializer, EmailTokenObtainPairSerializer, CompanySerializer,
+    InternshipDemandSerializer
 )
 from api.ml_utils import predict_fit
 
@@ -122,6 +123,41 @@ class ApplicationViewSet(viewsets.GenericViewSet,
 
         serializer = ApplicationSerializer(apps, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def accept(self, request, pk=None):
+        """Recruiter accepts a student application."""
+        app = self.get_object()
+        profile = request.user.profile
+
+        if profile.role != "recruiter":
+            return Response({"error": "Only recruiters can accept applications."}, status=403)
+
+        if app.offer.company != profile.company:
+            return Response({"error": "You are not allowed to manage this offer."}, status=403)
+
+        app.status = "accepted"
+        app.save()
+
+        return Response({"message": f"Application of {app.user.email} accepted for {app.offer.title}."})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reject(self, request, pk=None):
+        """Recruiter rejects a student application."""
+        app = self.get_object()
+        profile = request.user.profile
+
+        if profile.role != "recruiter":
+            return Response({"error": "Only recruiters can reject applications."}, status=403)
+
+        if app.offer.company != profile.company:
+            return Response({"error": "You are not allowed to manage this offer."}, status=403)
+
+        app.status = "rejected"
+        app.save()
+
+        return Response({"message": f"Application of {app.user.email} rejected for {app.offer.title}."})
+
 
 # =========================
 # 👤 PROFILES
@@ -523,4 +559,247 @@ class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     permission_classes = [permissions.AllowAny]
+
+class InternshipDemandViewSet(viewsets.ModelViewSet):
+    queryset = InternshipDemand.objects.select_related("student", "application", "university")
+    serializer_class = InternshipDemandSerializer
+    permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def accepted(self, request):
+        user = request.user
+        apps = Application.objects.filter(user=user, status="accepted")
+        serializer = ApplicationSerializer(apps, many=True)
+        return Response(serializer.data)
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        profile = user.profile
+
+        if profile.role != "student":
+            return Response({"error": "Only students can submit internship demands."}, status=403)
+
+        application_id = request.data.get("application_id")
+        if not application_id:
+            return Response({"error": "application_id is required"}, status=400)
+
+        try:
+            app = Application.objects.get(id=application_id, user=user, status="accepted")
+        except Application.DoesNotExist:
+            return Response({"error": "Valid accepted application not found"}, status=404)
+
+        if hasattr(app, "internship_demand"):
+            return Response({"error": "Demand already exists for this application"}, status=400)
+
+        if not profile.university:
+            return Response({"error": "Student is not assigned to a university."}, status=400)
+
+        demand = InternshipDemand.objects.create(
+            student=user,
+            application=app,
+            university=profile.university
+        )
+
+        serializer = self.get_serializer(demand)
+        return Response(serializer.data, status=201)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_demands(self, request):
+        """ Student → list all internship demands """
+        user = request.user
+        demands = InternshipDemand.objects.filter(student=user)
+        serializer = self.get_serializer(demands, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def university_demands(self, request):
+        """ University → list all demands from students belonging to that university """
+        profile = request.user.profile
+
+        if profile.role != "university":
+            return Response({"error": "Only university users can access this."}, status=403)
+
+        if not profile.university:
+            return Response({"error": "University not found for this user"}, status=400)
+
+        demands = InternshipDemand.objects.filter(university=profile.university)
+        serializer = self.get_serializer(demands, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def approve(self, request, pk=None):
+        profile = request.user.profile
+        if profile.role != "university":
+            return Response({"error": "Only university can approve demands."}, status=403)
+
+        demand = self.get_object()
+        demand.status = "approved"
+        demand.reviewed_at = timezone.now()
+        demand.save()
+
+        return Response({"message": "Demand approved. Student can now request documents."})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def reject(self, request, pk=None):
+        profile = request.user.profile
+
+        if profile.role != "university":
+            return Response({"error": "Only university users can reject demands."}, status=403)
+
+        demand = self.get_object()
+        demand.status = "rejected"
+        demand.reviewed_at = timezone.now()
+        demand.save()
+
+        return Response({"message": "Internship demand rejected."})
+
+    @action(detail=False, methods=['get'], url_path="student/(?P<student_id>[^/.]+)/details")
+    def student_details(self, request, student_id=None):
+        # only university can access
+        profile = request.user.profile
+        if profile.role != "university":
+            return Response({"error": "Only university users can access this."}, status=403)
+
+        # get student
+        try:
+            student_user = User.objects.get(id=student_id)
+        except User.DoesNotExist:
+            return Response({"error": "Student not found"}, status=404)
+
+        # only show if student belongs to this university
+        if student_user.profile.university != profile.university:
+            return Response({"error": "This student does not belong to your university"}, status=403)
+
+        # accepted applications
+        apps = Application.objects.filter(user=student_user, status="accepted")
+
+        apps_serialized = []
+        for app in apps:
+            apps_serialized.append({
+                "id": app.id,
+                "offer_title": app.offer.title,
+                "company": app.offer.company.name,
+                "field_required": app.offer.field_required,
+                "level_required": app.offer.level_required,
+                "predicted_fit": app.predicted_fit,
+            })
+
+        # demand (if exists)
+        demand = InternshipDemand.objects.filter(student=student_user).first()
+        demand_data = None
+        if demand:
+            demand_data = {
+                "id": demand.id,
+                "status": demand.status,
+                "created_at": demand.created_at,
+                "reviewed_at": demand.reviewed_at,
+            }
+
+        return Response({
+            "student": {
+                "id": student_user.id,
+                "email": student_user.email,
+                "field_of_study": student_user.profile.field_of_study,
+                "gpa": student_user.profile.gpa,
+                "score": student_user.profile.score
+            },
+            "accepted_applications": apps_serialized,
+            "internship_demand": demand_data
+        })
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def generate_convention(self, request, pk=None):
+        demand = self.get_object()
+
+        # Ensure ONLY the student can generate his own papers
+        if request.user != demand.student:
+            return Response({"error": "You can generate only your own internship documents."}, status=403)
+
+        # Check if demand was accepted by university
+        if demand.status != "approved":
+            return Response({"error": "University has not approved this internship yet."}, status=400)
+
+        # PDF generation logic (same as before)
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from django.core.mail import EmailMessage
+        from io import BytesIO
+
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+
+        p.setFont("Helvetica", 16)
+        p.drawString(50, 800, "Convention de Stage")
+
+        p.setFont("Helvetica", 12)
+        p.drawString(50, 760, f"Université : {demand.university.name}")
+        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+        p.drawString(50, 720, f"Entreprise : {demand.application.offer.company.name}")
+        p.drawString(50, 700, f"Offre : {demand.application.offer.title}")
+
+        p.drawString(50, 660, "Ce document confirme le stage de l'étudiant au sein de l'entreprise.")
+        p.drawString(50, 640, "Signature Université: _____________________")
+        p.drawString(50, 620, "Signature Entreprise: _____________________")
+        p.drawString(50, 600, "Signature Étudiant: _______________________")
+
+        p.showPage()
+        p.save()
+
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
+
+        # Send by email
+        email = EmailMessage(
+            subject="Convention de Stage",
+            body="Veuillez trouver ci-joint votre convention de stage.",
+            to=[request.user.email]
+        )
+        email.attach("Convention_de_Stage.pdf", pdf_data, "application/pdf")
+        email.send()
+
+        return Response({"message": "Convention sent by email."})
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def generate_letter(self, request, pk=None):
+        demand = self.get_object()
+
+        if request.user != demand.student:
+            return Response({"error": "You can generate only your own internship documents."}, status=403)
+
+        if demand.status != "approved":
+            return Response({"error": "University has not approved this internship yet."}, status=400)
+
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.pagesizes import A4
+        from django.core.mail import EmailMessage
+        from io import BytesIO
+
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
+
+        p.setFont("Helvetica", 16)
+        p.drawString(50, 800, "Lettre d'Affectation")
+
+        p.setFont("Helvetica", 12)
+        p.drawString(50, 760, f"Université : {demand.university.name}")
+        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+        p.drawString(50, 720, f"Affectation : {demand.application.offer.company.name}")
+
+        p.drawString(50, 700, "L'étudiant est affecté officiellement à l'entreprise susmentionnée.")
+        p.drawString(50, 680, "Signature de l'Université : ____________________")
+
+        p.showPage()
+        p.save()
+
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
+
+        email = EmailMessage(
+            subject="Lettre d'Affectation",
+            body="Veuillez trouver ci-joint votre lettre d’affectation.",
+            to=[request.user.email]
+        )
+        email.attach("Lettre_Affectation.pdf", pdf_data, "application/pdf")
+        email.send()
+
+        return Response({"message": "Lettre d'affectation sent by email."})
 

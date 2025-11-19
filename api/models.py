@@ -204,3 +204,22 @@ class ScoreHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.email} +{self.points} ({self.reason})"
+
+
+class InternshipDemand(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+
+    student = models.ForeignKey("api.User", on_delete=models.CASCADE, related_name="internship_demands")
+    application = models.OneToOneField("api.Application", on_delete=models.CASCADE, related_name="internship_demand")
+    university = models.ForeignKey("api.University", on_delete=models.CASCADE, related_name="received_demands")
+
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Demand by {self.student.email} for {self.application.offer.title}"

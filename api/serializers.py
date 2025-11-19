@@ -2,7 +2,8 @@ from django.contrib.auth import get_user_model, authenticate
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Application, Offer, Profile, Skill, Certification, University, ScoreHistory, Feedback, Company
+from .models import Application, Offer, Profile, Skill, Certification, University, ScoreHistory, Feedback, Company, \
+    InternshipDemand
 
 User = get_user_model()
 
@@ -35,27 +36,57 @@ class UniversitySerializer(serializers.ModelSerializer):
         fields = ["id", "name", "city", "country", "website", "email_domain"]
 
 
-# ✅ PROFILE (already exists, now extended)
 class ProfileSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+    role = serializers.CharField(read_only=True)
+    university = serializers.SerializerMethodField()
+    company = serializers.SerializerMethodField()
     skills = SkillSerializer(many=True, read_only=True)
     certifications = CertificationSerializer(many=True, read_only=True)
-    skill_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Skill.objects.all(),
-        many=True,
-        write_only=True,
-        source='skills'
-    )
-    cert_ids = serializers.PrimaryKeyRelatedField(
-        queryset=Certification.objects.all(),
-        many=True,
-        write_only=True,
-        source='certifications'
-    )
 
     class Meta:
         model = Profile
-        fields = ["id", "user", "field_of_study", "gpa", "score", "skills", "certifications", "skill_ids", "cert_ids"]
+        fields = [
+            "id",
+            "user",
+            "role",
+            "field_of_study",
+            "gpa",
+            "score",
+            "university",
+            "company",
+            "skills",
+            "certifications",
+        ]
 
+    def get_user(self, obj):
+        return {
+            "id": obj.user.id,
+            "email": obj.user.email,
+            "first_name": obj.user.first_name,
+            "last_name": obj.user.last_name
+        }
+
+    def get_university(self, obj):
+        if not obj.university:
+            return None
+        return {
+            "id": obj.university.id,
+            "name": obj.university.name,
+            "city": obj.university.city,
+            "country": obj.university.country,
+        }
+
+    def get_company(self, obj):
+        if not obj.company:
+            return None
+        return {
+            "id": obj.company.id,
+            "name": obj.company.name,
+            "industry": obj.company.industry,
+            "city": obj.company.city,
+            "country": obj.company.country,
+        }
 
 class CompanySerializer(serializers.ModelSerializer):
     class Meta:
@@ -348,3 +379,8 @@ class EmailTokenObtainPairSerializer(serializers.Serializer):
                 "is_verified": profile.is_verified if profile else None,
             }
         }
+class InternshipDemandSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = InternshipDemand
+        fields = "__all__"
+        read_only_fields = ["student", "university", "status", "created_at", "reviewed_at"]

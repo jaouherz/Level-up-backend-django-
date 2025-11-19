@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Student Details</title>
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+
+<body class="p-4">
+
+<h2 class="mb-4">Student Details</h2>
+
+<div id="content"></div>
+
+<script>
+const token = localStorage.getItem("access");
+
+// extract student_id from URL
+const studentId = window.location.pathname.split("/").slice(-2)[0];
+
+async function loadDetails() {
+    const res = await fetch(`/api/internship-demands/student/${studentId}/details/`, {
+        headers: { "Authorization": "Bearer " + token }
+    });
+
+    const data = await res.json();
+    console.log(data);
+
+    const c = document.getElementById("content");
+    c.innerHTML = `
+        <div class="card p-3 mb-3">
+            <h4>Student Info</h4>
+            <p><strong>Email:</strong> ${data.student.email}</p>
+            <p><strong>Field of study:</strong> ${data.student.field_of_study}</p>
+            <p><strong>GPA:</strong> ${data.student.gpa}</p>
+            <p><strong>Score:</strong> ${data.student.score}</p>
+        </div>
+
+        <h4>Accepted Applications</h4>
+        ${data.accepted_applications.length === 0 ? `
+            <div class="alert alert-warning">No accepted internships yet.</div>
+        ` : ""}
+    `;
+
+    data.accepted_applications.forEach(app => {
+        c.innerHTML += `
+        <div class="card mb-3 shadow">
+            <div class="card-body">
+                <h5>${app.offer_title}</h5>
+                <p><strong>Company:</strong> ${app.company}</p>
+                <p><strong>Field Required:</strong> ${app.field_required}</p>
+                <p><strong>Level:</strong> ${app.level_required}</p>
+                <p><strong>Predicted Fit:</strong> ${app.predicted_fit}</p>
+            </div>
+        </div>`;
+    });
+
+    c.innerHTML += `
+        <h4 class="mt-4">Internship Demand</h4>
+    `;
+
+    if (!data.internship_demand) {
+        c.innerHTML += `<p class="text-danger">No demand submitted yet.</p>`;
+    } else {
+        c.innerHTML += `
+        <div class="card p-3">
+            <p><strong>Status:</strong> ${data.internship_demand.status}</p>
+            <p><strong>Created:</strong> ${data.internship_demand.created_at}</p>
+            <p><strong>Reviewed:</strong> ${data.internship_demand.reviewed_at ?? "Not yet"}</p>
+        </div>`;
+    }
+}
+
+loadDetails();
+</script>
+</body>
+</html>
