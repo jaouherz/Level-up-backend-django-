@@ -28,12 +28,10 @@ urlpatterns = [
     path("pending-users/", pending_users),
     path("offers/my-company/", OfferViewSet.as_view({"get": "my_company"})),
 
-    # JWT API endpoints
     path("register/", RegisterView.as_view(), name="register"),
     path("login/", EmailTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("refresh/", TokenRefreshView.as_view(), name="token_refresh"),
 
-    # HTML pages
     path("auth/logout/", html_logout, name="html_logout"),
 
     path("auth/jwt-login/", html_jwt_login, name="html_jwt_login"),
