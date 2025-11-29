@@ -54,7 +54,7 @@ STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 # Extra directories to look for static files
-STATICFILES_DIRS = [
+STATICFILES_DIRS = [    
     BASE_DIR / "static",
 ]
 AUTH_USER_MODEL = 'api.User'

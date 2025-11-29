@@ -1,13 +1,316 @@
 {% extends "recruiting/base.html" %}
-{% block title %}Add Feedback{% endblock %}
+
+{% block title %}Add Feedback - RH{% endblock %}
+
 {% block content %}
-<h3 class="mb-3">Add Feedback — {{ application.user.username }}</h3>
-<form method="post" class="card card-body bg-white">
-  {% csrf_token %}
-  {{ form.as_p }}
-  <div class="d-flex gap-2">
-    <button class="btn btn-primary" type="submit">Save</button>
-    <a href="{% url 'recruiting:offer_apps' application.offer_id %}" class="btn btn-outline-secondary">Cancel</a>
-  </div>
-</form>
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Add Feedback</h1>
+            <p class="text-muted">Provide feedback for {{ application.user.username }}'s application</p>
+        </div>
+        <a href="{% url 'recruiting:offer_apps' application.offer_id %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back to Applications
+        </a>
+    </div>
+
+    <!-- Application Overview -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-light py-3">
+                    <h6 class="mb-0">
+                        <i class="bi bi-person-circle me-2"></i>Application Overview
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" 
+                                     style="width: 50px; height: 50px;">
+                                    <i class="bi bi-person text-white"></i>
+                                </div>
+                                <div>
+                                    <div class="fw-bold">{{ application.user.username }}</div>
+                                    <small class="text-muted">Candidate</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div>
+                                <div class="text-muted small">Current Status</div>
+                                <span class="badge {% if application.status == 'accepted' %}bg-success{% elif application.status == 'rejected' %}bg-danger{% else %}bg-warning{% endif %}">
+                                    {{ application.get_status_display }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div>
+                                <div class="text-muted small">Fit Score</div>
+                                <div class="fw-bold {% if application.predicted_fit >= 80 %}text-success{% elif application.predicted_fit >= 60 %}text-warning{% else %}text-danger{% endif %}">
+                                    {{ application.predicted_fit|default:"—" }}%
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <div>
+                                <div class="text-muted small">Offer</div>
+                                <div class="fw-bold">{{ application.offer.title }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="mb-0">
+                        <i class="bi bi-chat-left-text me-2"></i>Feedback Details
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="post" id="feedbackForm">
+                        {% csrf_token %}
+                        
+                        <!-- Feedback Type -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.feedback_type.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-tag me-2 text-primary"></i>Feedback Type
+                                </label>
+                                <div class="btn-group w-100" role="group" aria-label="Feedback type">
+                                    {% for choice in form.feedback_type.field.choices %}
+                                    <input type="radio" class="btn-check" name="{{ form.feedback_type.name }}" 
+                                           id="{{ form.feedback_type.id_for_label }}_{{ forloop.counter0 }}" 
+                                           value="{{ choice.0 }}" 
+                                           {% if form.feedback_type.value == choice.0 %}checked{% endif %}>
+                                    <label class="btn btn-outline-primary flex-fill" 
+                                           for="{{ form.feedback_type.id_for_label }}_{{ forloop.counter0 }}">
+                                        <i class="bi 
+                                            {% if choice.0 == 'positive' %}bi-check-circle text-success
+                                            {% elif choice.0 == 'negative' %}bi-x-circle text-danger
+                                            {% else %}bi-dash-circle text-warning{% endif %} me-2"></i>
+                                        {{ choice.1 }}
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                                {% if form.feedback_type.errors %}
+                                <div class="text-danger small mt-2">
+                                    {{ form.feedback_type.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Comment -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.comment.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-chat-left me-2 text-success"></i>Comments
+                                </label>
+                                <textarea class="form-control" id="{{ form.comment.id_for_label }}" 
+                                          name="{{ form.comment.name }}" rows="6" 
+                                          placeholder="Provide detailed feedback about the candidate's application, skills, interview performance, or any other relevant observations..."
+                                          {% if form.comment.field.required %}required{% endif %}>{{ form.comment.value|default:'' }}</textarea>
+                                {% if form.comment.errors %}
+                                <div class="text-danger small mt-2">
+                                    {{ form.comment.errors }}
+                                </div>
+                                {% endif %}
+                                <div class="form-text">
+                                    <i class="bi bi-info-circle me-1"></i>
+                                    Be specific and constructive in your feedback to help with future decision-making.
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Rating (if available in form) -->
+                        {% if form.rating %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <label for="{{ form.rating.id_for_label }}" class="form-label fw-semibold">
+                                    <i class="bi bi-star me-2 text-warning"></i>Rating
+                                </label>
+                                <div class="rating-stars">
+                                    {% for i in "12345" %}
+                                    <input type="radio" id="star{{ i }}" name="{{ form.rating.name }}" value="{{ i }}"
+                                           {% if form.rating.value == i %}checked{% endif %} class="d-none">
+                                    <label for="star{{ i }}" class="star-label">
+                                        <i class="bi {% if form.rating.value >= i %}bi-star-fill text-warning{% else %}bi-star text-muted{% endif %}"></i>
+                                    </label>
+                                    {% endfor %}
+                                </div>
+                                {% if form.rating.errors %}
+                                <div class="text-danger small mt-2">
+                                    {{ form.rating.errors }}
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Confidential (if available in form) -->
+                        {% if form.confidential %}
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="{{ form.confidential.id_for_label }}" 
+                                           name="{{ form.confidential.name }}" {% if form.confidential.value %}checked{% endif %}>
+                                    <label class="form-check-label fw-semibold" for="{{ form.confidential.id_for_label }}">
+                                        <i class="bi bi-shield-lock me-2 text-info"></i>Confidential Feedback
+                                    </label>
+                                    <div class="form-text">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Marking as confidential will restrict visibility of this feedback.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Action Buttons -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex gap-3 justify-content-end">
+                                    <a href="{% url 'recruiting:offer_apps' application.offer_id %}" class="btn btn-outline-secondary px-4">
+                                        <i class="bi bi-x-circle me-2"></i>Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary px-4" id="submitBtn">
+                                        <i class="bi bi-check-circle me-2"></i>Save Feedback
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .card-header {
+        border-radius: 10px 10px 0 0 !important;
+    }
+    
+    .form-control, .form-select {
+        border: 2px solid #e3e6f0;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #4e73df;
+        box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    }
+    
+    .btn-check:checked + .btn-outline-primary {
+        background-color: #4e73df;
+        border-color: #4e73df;
+        color: white;
+    }
+    
+    .rating-stars {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .star-label {
+        cursor: pointer;
+        font-size: 1.5rem;
+        transition: transform 0.2s ease;
+    }
+    
+    .star-label:hover {
+        transform: scale(1.2);
+    }
+    
+    .btn-check:checked + .star-label i {
+        color: #f6c23e !important;
+    }
+    
+    .form-check-input:checked {
+        background-color: #4e73df;
+        border-color: #4e73df;
+    }
+    
+    .text-muted small {
+        font-size: 0.875rem;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Add interactivity to radio buttons
+        const radioButtons = document.querySelectorAll('.btn-check');
+        radioButtons.forEach(radio => {
+            radio.addEventListener('change', function() {
+                // Update visual state of radio button group
+                const labels = document.querySelectorAll('.btn-outline-primary');
+                labels.forEach(label => {
+                    label.classList.remove('active');
+                });
+                if (this.checked) {
+                    const label = document.querySelector(`label[for="${this.id}"]`);
+                    if (label) {
+                        label.classList.add('active');
+                    }
+                }
+            });
+        });
+        
+        // Initialize radio button visual state
+        radioButtons.forEach(radio => {
+            if (radio.checked) {
+                const label = document.querySelector(`label[for="${radio.id}"]`);
+                if (label) {
+                    label.classList.add('active');
+                }
+            }
+        });
+        
+        // Star rating interactivity
+        const starInputs = document.querySelectorAll('.star-label');
+        starInputs.forEach(star => {
+            star.addEventListener('click', function() {
+                const inputId = this.getAttribute('for');
+                const input = document.getElementById(inputId);
+                if (input) {
+                    // Update all stars up to the clicked one
+                    const stars = document.querySelectorAll('.star-label');
+                    const value = parseInt(input.value);
+                    stars.forEach((s, index) => {
+                        const starIcon = s.querySelector('i');
+                        if (index < value) {
+                            starIcon.className = 'bi bi-star-fill text-warning';
+                        } else {
+                            starIcon.className = 'bi bi-star text-muted';
+                        }
+                    });
+                }
+            });
+        });
+        
+        // Form submission handling
+        const form = document.getElementById('feedbackForm');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        form.addEventListener('submit', function() {
+            // Add loading state
+            submitBtn.innerHTML = '<i class="bi bi-arrow-repeat spinner-border spinner-border-sm me-2"></i>Saving...';
+            submitBtn.disabled = true;
+        });
+    });
+</script>
 {% endblock %}

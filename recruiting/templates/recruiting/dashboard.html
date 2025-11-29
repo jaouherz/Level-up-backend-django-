@@ -1,47 +1,270 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Recruiter Dashboard</title>
+{% extends 'recruiting/base.html' %}
 
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+{% block title %}Dashboard - RH{% endblock %}
 
-    <style>
-        body { background: #f7f9fc; }
-        .card-hover:hover { transform: scale(1.02); transition: 0.2s; }
-    </style>
-</head>
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Recruiter Dashboard</h1>
+            <p class="text-muted">Welcome back! Here's an overview of your recruitment activities.</p>
+        </div>
+        <div class="d-flex">
+            <span class="badge bg-primary p-2 me-2">
+                <i class="bi bi-calendar-week me-1"></i>
+                {{ current_date }}
+            </span>
+        </div>
+    </div>
 
-<body class="p-4">
+    <!-- Stats Cards -->
+    <div class="row mb-5">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Active Offers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">12</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-briefcase fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-<div class="container mt-5">
-    <h2 class="mb-4">Recruiter Dashboard</h2>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                New Applications
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">8</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-person-plus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-    <div class="row">
-        <div class="col-md-4">
-            <a href="/recruiting/offers/" class="text-decoration-none text-dark">
-                <div class="card shadow card-hover">
-                    <div class="card-body text-center">
-                        <h4>Your Offers</h4>
-                        <p>View and manage offers you created.</p>
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Pending Reviews
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">5</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock-history fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                University Partners
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">3</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h3 class="h4 mb-3">Quick Actions</h3>
+        </div>
+        
+        <div class="col-md-6 col-lg-4 mb-4">
+            <a href="{% url 'recruiting:offer_list' %}" class="text-decoration-none">
+                <div class="card card-hover shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-primary d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-briefcase text-white fs-4"></i>
+                        </div>
+                        <h4 class="card-title">Your Offers</h4>
+                        <p class="card-text text-muted">View and manage offers you created.</p>
+                        <div class="mt-3">
+                            <span class="badge bg-light text-dark">12 active</span>
+                        </div>
                     </div>
                 </div>
             </a>
         </div>
 
-        <div class="col-md-4">
-            <a href="/recruiting/offers/create/" class="text-decoration-none text-dark">
-                <div class="card shadow card-hover">
-                    <div class="card-body text-center">
-                        <h4>Create Offer</h4>
-                        <p>Add a new internship or job opportunity.</p>
+        <div class="col-md-6 col-lg-4 mb-4">
+            <a href="{% url 'recruiting:offer_create' %}" class="text-decoration-none">
+                <div class="card card-hover shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-success d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-plus-circle text-white fs-4"></i>
+                        </div>
+                        <h4 class="card-title">Create Offer</h4>
+                        <p class="card-text text-muted">Add a new internship or job opportunity.</p>
+                        <div class="mt-3">
+                            <span class="badge bg-light text-dark">Quick setup</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-6 col-lg-4 mb-4">
+            <a href="test" class="text-decoration-none">
+                <div class="card card-hover shadow h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="rounded-circle bg-info d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                            <i class="bi bi-people text-white fs-4"></i>
+                        </div>
+                        <h4 class="card-title">Applications</h4>
+                        <p class="card-text text-muted">Review candidate applications and responses.</p>
+                        <div class="mt-3">
+                            <span class="badge bg-light text-dark">8 new</span>
+                        </div>
                     </div>
                 </div>
             </a>
         </div>
     </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-success d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-person-check text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-bold">New application received</div>
+                                <div class="text-muted small">John Doe applied for Frontend Developer position</div>
+                                <div class="text-muted small">2 hours ago</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-briefcase text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-bold">Offer published</div>
+                                <div class="text-muted small">Your "Data Analyst Intern" offer is now live</div>
+                                <div class="text-muted small">Yesterday</div>
+                            </div>
+                        </div>
+                        <div class="list-group-item d-flex align-items-center">
+                            <div class="flex-shrink-0">
+                                <div class="rounded-circle bg-warning d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-building text-white"></i>
+                                </div>
+                            </div>
+                            <div class="flex-grow-1 ms-3">
+                                <div class="fw-bold">University partnership</div>
+                                <div class="text-muted small">Tech University added as a new partner</div>
+                                <div class="text-muted small">2 days ago</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Deadlines -->
+        <div class="col-lg-4 mb-4">
+            <div class="card shadow">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Upcoming Deadlines</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="fw-bold">Frontend Developer</div>
+                        <div class="text-muted small">Applications close in 3 days</div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold">Data Analyst Intern</div>
+                        <div class="text-muted small">Applications close in 1 week</div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 50%" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="fw-bold">UX Designer</div>
+                        <div class="text-muted small">Applications close in 2 weeks</div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 25%" aria-valuenow="25" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-</body>
-</html>
+<style>
+    .card-hover {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+</style>
+
+<script>
+    // Set current date
+    document.addEventListener('DOMContentLoaded', function() {
+        const now = new Date();
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+        document.querySelector('.badge.bg-primary').innerHTML = `<i class="bi bi-calendar-week me-1"></i>${now.toLocaleDateString('en-US', options)}`;
+    });
+</script>
+{% endblock %}

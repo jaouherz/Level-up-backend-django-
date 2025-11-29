@@ -462,18 +462,17 @@
         if (res.ok) {
           localStorage.setItem("access", data.access);
           localStorage.setItem("refresh", data.refresh);
+          localStorage.setItem("firstname", data.user.first_name);
 
-          // Show success message
           alert.textContent = "✅ Logged in successfully! Redirecting...";
           alert.className = "alert alert-success";
           alert.style.display = "block";
 
-          // Redirect after a short delay
           setTimeout(() => {
             const role = data.user.role;
 
             if (role === "recruiter") {
-                window.location.href = "/recruiting/offers/";
+                window.location.href = "/recruiting/";
             } else if (role === "university") {
                 window.location.href = "/recruiting/university/students/";
             } else {
@@ -489,13 +488,11 @@
         alert.className = "alert alert-error";
         alert.style.display = "block";
       } finally {
-        // Reset button state
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
       }
     });
 
-    // Toggle password visibility
    document.querySelectorAll('.toggle-password').forEach(button => {
   button.addEventListener('click', function() {
     const passwordInput = this.parentElement.querySelector('input');
@@ -505,7 +502,6 @@
   });
 });
 
-    // Add some animation on load
     document.addEventListener('DOMContentLoaded', function() {
       document.querySelector('.container').style.opacity = '0';
       document.querySelector('.container').style.transform = 'translateY(20px)';
@@ -521,12 +517,10 @@
     let access = localStorage.getItem("access");
     const refresh = localStorage.getItem("refresh");
 
-    // Check if token expired
     const payload = JSON.parse(atob(access.split(".")[1]));
     const now = Math.floor(Date.now() / 1000);
 
     if (payload.exp < now) {
-        // refresh token
         const res = await fetch("/api/refresh/", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -538,7 +532,6 @@
             localStorage.setItem("access", data.access);
             return data.access;
         } else {
-            // force logout
             localStorage.clear();
             window.location.href = "/api/auth/jwt-login/";
             return null;

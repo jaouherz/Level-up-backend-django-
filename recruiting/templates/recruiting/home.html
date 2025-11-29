@@ -1,4 +1,197 @@
-<!DOCTYPE html><html><body>
-  <h2>Home</h2>
-  <p><a href="{% url 'recruiting:dashboard' %}">Go to RH dashboard</a></p>
-</body></html>
+{% extends 'recruiting/base.html' %}
+
+{% block title %}Home - Recruitment Hub{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-5">
+    <!-- Hero Section -->
+    <div class="row align-items-center min-vh-75">
+        <div class="col-lg-6">
+            <div class="px-4">
+                <h1 class="display-4 fw-bold text-dark mb-4">
+                    Welcome to 
+                    <span class="text-primary">Recruitment Hub</span>
+                </h1>
+                <p class="lead text-muted mb-4">
+                    Streamline your recruitment process with our powerful platform. 
+                    Connect with top talent, manage offers, and track applications 
+                    all in one place.
+                </p>
+                <div class="d-flex flex-wrap gap-3 mb-5">
+                    <a href="{% url 'recruiting:dashboard' %}" class="btn btn-primary btn-lg px-4 py-2">
+                        <i class="bi bi-speedometer2 me-2"></i>
+                        Go to Dashboard
+                    </a>
+                    <a href="#" class="btn btn-outline-secondary btn-lg px-4 py-2">
+                        <i class="bi bi-info-circle me-2"></i>
+                        Learn More
+                    </a>
+                </div>
+                
+                <!-- Stats -->
+                <div class="row text-center">
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h3 class="text-primary fw-bold mb-1">500+</h3>
+                            <p class="text-muted small">Active Offers</p>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="border-end">
+                            <h3 class="text-success fw-bold mb-1">2.5k+</h3>
+                            <p class="text-muted small">Applications</p>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <h3 class="text-info fw-bold mb-1">50+</h3>
+                        <p class="text-muted small">Partners</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="position-relative">
+                <div class="card border-0 shadow-lg rounded-3 overflow-hidden">
+                    <div class="card-body p-0">
+                        <div class="bg-gradient-primary text-white p-5">
+                            <h4 class="mb-3">Get Started Today</h4>
+                            <p class="mb-0">Join thousands of recruiters finding the perfect candidates.</p>
+                        </div>
+                        <div class="p-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-briefcase text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Create Offers</h6>
+                                    <small class="text-muted">Post internships and job opportunities</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center mb-3">
+                                <div class="bg-success rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-people text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">Manage Applications</h6>
+                                    <small class="text-muted">Review and track candidate responses</small>
+                                </div>
+                            </div>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                    <i class="bi bi-building text-white"></i>
+                                </div>
+                                <div>
+                                    <h6 class="mb-0">University Partnerships</h6>
+                                    <small class="text-muted">Connect with educational institutions</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Floating elements for visual interest -->
+                <div class="position-absolute top-0 end-0 mt-4 me-4">
+                    <div class="bg-warning rounded-circle p-2 shadow">
+                        <i class="bi bi-star-fill text-white"></i>
+                    </div>
+                </div>
+                <div class="position-absolute bottom-0 start-0 mb-4 ms-4">
+                    <div class="bg-success rounded-circle p-2 shadow">
+                        <i class="bi bi-check-lg text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="row py-5 mt-5">
+        <div class="col-12 text-center mb-5">
+            <h2 class="fw-bold">Why Choose Recruitment Hub?</h2>
+            <p class="text-muted lead">Powerful features designed for modern recruiters</p>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body text-center p-4">
+                    <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-lightning-charge text-primary fs-2"></i>
+                    </div>
+                    <h4 class="card-title">Fast & Efficient</h4>
+                    <p class="card-text text-muted">
+                        Streamline your recruitment process with automated workflows 
+                        and intuitive tools that save you time.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body text-center p-4">
+                    <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-graph-up text-success fs-2"></i>
+                    </div>
+                    <h4 class="card-title">Smart Analytics</h4>
+                    <p class="card-text text-muted">
+                        Make data-driven decisions with comprehensive analytics 
+                        and reporting on your recruitment efforts.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card border-0 shadow-sm h-100 card-hover">
+                <div class="card-body text-center p-4">
+                    <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                        <i class="bi bi-shield-check text-info fs-2"></i>
+                    </div>
+                    <h4 class="card-title">Secure & Reliable</h4>
+                    <p class="card-text text-muted">
+                        Your data is protected with enterprise-grade security 
+                        and 99.9% uptime guarantee.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="row py-5 mt-3">
+        <div class="col-12">
+            <div class="card bg-gradient-primary border-0 shadow-lg overflow-hidden">
+                <div class="card-body p-5 text-center text-white">
+                    <h2 class="mb-3">Ready to Transform Your Recruitment?</h2>
+                    <p class="mb-4 lead opacity-75">
+                        Join thousands of companies already using Recruitment Hub to find their perfect candidates.
+                    </p>
+                    <a href="{% url 'recruiting:dashboard' %}" class="btn btn-light btn-lg px-5 py-2">
+                        <i class="bi bi-rocket-takeoff me-2"></i>
+                        Get Started Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .min-vh-75 {
+        min-height: 75vh;
+    }
+    
+    .card-hover {
+        transition: transform 0.3s, box-shadow 0.3s;
+    }
+    
+    .card-hover:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 12px 25px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    }
+</style>
+{% endblock %}
