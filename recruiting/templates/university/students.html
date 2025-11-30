@@ -1,56 +1,252 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Your Students</title>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
+{% extends 'recruiting/base.html' %}
 
-<body class="p-4">
+{% block title %}University Students - RH{% endblock %}
 
-<h2 class="mb-3">Students in Your University</h2>
-<input class="form-control mb-3" id="search" placeholder="Search student...">
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">University Students</h1>
+                <p class="text-muted">Manage and view student profiles from your university</p>
+            </div>
+            <div>
+                <span class="badge bg-primary p-2">
+                    <i class="bi bi-people me-1"></i>
+                    <span id="studentCount">0</span> Students
+                </span>
+            </div>
+        </div>
+    </div>
 
-<div id="studentContainer"></div>
+    <!-- Search and Filters -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="search-box">
+                <i class="bi bi-search"></i>
+                <input class="form-control" id="search" placeholder="Search students by name, email, or field of study...">
+            </div>
+        </div>
+        <div class="col-md-4">
+            <select class="form-select" id="fieldFilter">
+                <option value="">All Fields of Study</option>
+                <!-- Options will be populated dynamically -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Students Container -->
+    <div id="studentContainer" class="row">
+        <!-- Students will be loaded here -->
+    </div>
+
+    <!-- Empty State -->
+    <div id="emptyState" class="empty-state d-none">
+        <i class="bi bi-person-x"></i>
+        <h4>No students found</h4>
+        <p class="text-muted">Try adjusting your search or filter to find what you're looking for.</p>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        padding: 1rem 0;
+        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 2rem;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .student-card {
+        border-left: 4px solid #4e73df;
+    }
+    
+    .search-box {
+        position: relative;
+    }
+    
+    .search-box .form-control {
+        padding-left: 2.5rem;
+    }
+    
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #6c757d;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+    
+    .student-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: #e9ecef;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6c757d;
+        font-size: 1.5rem;
+    }
+    
+    .field-badge {
+        background: #f8f9fa;
+        color: #6c757d;
+        border: 1px solid #e9ecef;
+    }
+</style>
 
 <script>
-const token = localStorage.getItem("access");
+    const token = localStorage.getItem("access");
 
-async function loadStudents() {
-    const res = await fetch("/api/profiles/", {
-        headers: { "Authorization": "Bearer " + token }
-    });
-    let students = await res.json();
+    async function loadStudents() {
+        try {
+            const res = await fetch("/api/profiles/filtered/", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+            let students = await res.json();
+            // Filter for students only
+            students = students.filter(p => p.role === "student");
+            console.log(students)
 
-    students = students.filter(p => p.role === "student");
+            // Get search query and filter
+            const searchQuery = document.getElementById("search").value.toLowerCase();
+            const fieldFilter = document.getElementById("fieldFilter").value;
 
-    const q = document.getElementById("search").value.toLowerCase();
-    students = students.filter(s =>
-        s.user.email.toLowerCase().includes(q)
-    );
+            // Apply filters
+            let filteredStudents = students.filter(s => {
+                const matchesSearch = 
+                    (s.user.email && s.user.email.toLowerCase().includes(searchQuery)) ||
+                    (s.field_of_study && s.field_of_study.toLowerCase().includes(searchQuery)) ||
+                    (s.user.first_name && s.user.first_name.toLowerCase().includes(searchQuery)) ||
+                    (s.user.last_name && s.user.last_name.toLowerCase().includes(searchQuery));
+                
+                const matchesField = !fieldFilter || s.field_of_study === fieldFilter;
+                
+                return matchesSearch && matchesField;
+            });
 
-    const container = document.getElementById("studentContainer");
-    container.innerHTML = "";
+            // Update student count
+            document.getElementById("studentCount").textContent = filteredStudents.length;
 
-    students.forEach(s => {
-        container.innerHTML += `
-            <div class="card mb-2 shadow">
-                <div class="card-body">
-                    <h5>${s.user.email}</h5>
-                    <p>Field: ${s.field_of_study}</p>
-                    <a href="/recruiting/university/student/${s.user.id}/" class="btn btn-primary">
-                      View Profile
-                    </a>
+            // Render students
+            const container = document.getElementById("studentContainer");
+            const emptyState = document.getElementById("emptyState");
+
+            if (filteredStudents.length === 0) {
+                container.classList.add("d-none");
+                emptyState.classList.remove("d-none");
+            } else {
+                container.classList.remove("d-none");
+                emptyState.classList.add("d-none");
+                
+                container.innerHTML = "";
+                
+                filteredStudents.forEach(s => {
+                    const studentCard = document.createElement("div");
+                    studentCard.className = "col-lg-6 col-xl-4 mb-4";
+                    
+                    studentCard.innerHTML = `
+                        <div class="card student-card h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-start mb-3">
+                                    <div class="student-avatar me-3">
+                                        <i class="bi bi-person-circle"></i>
+                                    </div>
+                                    <div class="flex-grow-1">
+                                        <h5 class="card-title mb-1">
+                                            ${s.user.first_name && s.user.last_name 
+                                                ? `${s.user.first_name} ${s.user.last_name}` 
+                                                : 'Student'}
+                                        </h5>
+                                        <p class="card-text text-muted small mb-2">
+                                            <i class="bi bi-envelope me-1"></i>${s.user.email}
+                                        </p>
+                                        ${s.field_of_study ? `
+                                            <span class="badge field-badge">
+                                                <i class="bi bi-book me-1"></i>${s.field_of_study}
+                                            </span>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-end">
+                                    <a href="/recruiting/university/student/${s.user.id}/" 
+                                       class="btn btn-primary btn-sm">
+                                        <i class="bi bi-eye me-1"></i>View Profile
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    container.appendChild(studentCard);
+                });
+            }
+            
+            // Update field filter options if needed
+            updateFieldFilter(students);
+        } catch (error) {
+            console.error("Error loading students:", error);
+            document.getElementById("studentContainer").innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Failed to load students. Please try again.
+                    </div>
                 </div>
-            </div>
-        `;
-    });
-}
+            `;
+        }
+    }
 
-document.getElementById("search").addEventListener("input", loadStudents);
-loadStudents();
+    function updateFieldFilter(students) {
+        const fieldFilter = document.getElementById("fieldFilter");
+        const existingOptions = Array.from(fieldFilter.options).map(opt => opt.value);
+        
+        // Get unique fields of study
+        const fields = [...new Set(students
+            .filter(s => s.field_of_study)
+            .map(s => s.field_of_study)
+        )].sort();
+        
+        // Add new options that don't exist
+        fields.forEach(field => {
+            if (!existingOptions.includes(field)) {
+                const option = document.createElement("option");
+                option.value = field;
+                option.textContent = field;
+                fieldFilter.appendChild(option);
+            }
+        });
+    }
+
+    // Event listeners
+    document.getElementById("search").addEventListener("input", loadStudents);
+    document.getElementById("fieldFilter").addEventListener("change", loadStudents);
+    
+    // Load students on page load
+    document.addEventListener("DOMContentLoaded", loadStudents);
 </script>
-
-</body>
-</html>
+{% endblock %}

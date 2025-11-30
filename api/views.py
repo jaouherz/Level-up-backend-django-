@@ -8,7 +8,7 @@ from django.contrib.auth import get_user_model, logout, login
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
-
+from rest_framework.exceptions import PermissionDenied
 from api.forms import RegisterForm, LoginForm
 
 User = get_user_model()
@@ -184,7 +184,7 @@ class ProfileViewSet(viewsets.ModelViewSet):
             "certifications": [c.name for c in profile.certifications.all()],
         })
 
-   
+    
     @action(detail=False, methods=["get"], url_path="my-profile")
     def my_profile(self, request):
         profile, _ = Profile.objects.get_or_create(user=request.user)
@@ -226,6 +226,49 @@ class ProfileViewSet(viewsets.ModelViewSet):
         profile.save()
         return profile
 
+
+    @action(detail=False, methods=['get'], url_path='filtered')
+    def filtered_profiles(self, request):
+        user = request.user
+        try:
+            profile = user.profile
+        except Profile.DoesNotExist:
+            raise PermissionDenied("Profile not found for the current user.")
+
+        role = profile.role
+
+        if role == "student":
+            raise PermissionDenied("Students cannot access filtered profiles.")
+
+        if role == "recruiter":
+            company = profile.company
+            if not company:
+                return Response([], status=200)
+
+            company_offers = Offer.objects.filter(company=company)
+
+            application_user_ids = (
+                Application.objects
+                .filter(offer__in=company_offers)
+                .values_list("user_id", flat=True)
+                .distinct()
+            )
+
+            profiles_qs = Profile.objects.filter(user_id__in=application_user_ids, role="student").distinct()
+            serializer = self.get_serializer(profiles_qs, many=True)
+            return Response(serializer.data)
+
+        if role == "university":
+            if not profile.university:
+                return Response([], status=200)
+
+            profiles_qs = Profile.objects.filter(university=profile.university, role="student")
+            serializer = self.get_serializer(profiles_qs, many=True)
+            return Response(serializer.data)
+
+        profiles_qs = Profile.objects.all()
+        serializer = self.get_serializer(profiles_qs, many=True)
+        return Response(serializer.data)
 # =========================
 # 📊 RANKING / REPLACEMENTS
 # =========================
@@ -654,22 +697,18 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], url_path="student/(?P<student_id>[^/.]+)/details")
     def student_details(self, request, student_id=None):
-        # only university can access
         profile = request.user.profile
         if profile.role != "university":
             return Response({"error": "Only university users can access this."}, status=403)
 
-        # get student
         try:
             student_user = User.objects.get(id=student_id)
         except User.DoesNotExist:
             return Response({"error": "Student not found"}, status=404)
 
-        # only show if student belongs to this university
         if student_user.profile.university != profile.university:
             return Response({"error": "This student does not belong to your university"}, status=403)
 
-        # accepted applications
         apps = Application.objects.filter(user=student_user, status="accepted")
 
         apps_serialized = []
@@ -683,16 +722,16 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
                 "predicted_fit": app.predicted_fit,
             })
 
-        # demand (if exists)
-        demand = InternshipDemand.objects.filter(student=student_user).first()
-        demand_data = None
-        if demand:
-            demand_data = {
-                "id": demand.id,
-                "status": demand.status,
-                "created_at": demand.created_at,
-                "reviewed_at": demand.reviewed_at,
-            }
+        demands = InternshipDemand.objects.filter(student=student_user)
+
+        demands_data = []
+        for d in demands:
+            demands_data.append({
+                "id": d.id,
+                "status": d.status,
+                "created_at": d.created_at,
+                "reviewed_at": d.reviewed_at,
+            })
 
         return Response({
             "student": {
@@ -703,103 +742,100 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
                 "score": student_user.profile.score
             },
             "accepted_applications": apps_serialized,
-            "internship_demand": demand_data
+            "internship_demands": demands_data  # <-- now a list
         })
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def generate_convention(self, request, pk=None):
-        demand = self.get_object()
+        @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+        def generate_convention(self, request, pk=None):
+            demand = self.get_object()
 
-        # Ensure ONLY the student can generate his own papers
-        if request.user != demand.student:
-            return Response({"error": "You can generate only your own internship documents."}, status=403)
+            if request.user != demand.student:
+                return Response({"error": "You can generate only your own internship documents."}, status=403)
 
-        # Check if demand was accepted by university
-        if demand.status != "approved":
-            return Response({"error": "University has not approved this internship yet."}, status=400)
+            if demand.status != "approved":
+                return Response({"error": "University has not approved this internship yet."}, status=400)
 
-        # PDF generation logic (same as before)
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import A4
-        from django.core.mail import EmailMessage
-        from io import BytesIO
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import A4
+            from django.core.mail import EmailMessage
+            from io import BytesIO
 
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=A4)
+            buffer = BytesIO()
+            p = canvas.Canvas(buffer, pagesize=A4)
 
-        p.setFont("Helvetica", 16)
-        p.drawString(50, 800, "Convention de Stage")
+            p.setFont("Helvetica", 16)
+            p.drawString(50, 800, "Convention de Stage")
 
-        p.setFont("Helvetica", 12)
-        p.drawString(50, 760, f"Université : {demand.university.name}")
-        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
-        p.drawString(50, 720, f"Entreprise : {demand.application.offer.company.name}")
-        p.drawString(50, 700, f"Offre : {demand.application.offer.title}")
+            p.setFont("Helvetica", 12)
+            p.drawString(50, 760, f"Université : {demand.university.name}")
+            p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+            p.drawString(50, 720, f"Entreprise : {demand.application.offer.company.name}")
+            p.drawString(50, 700, f"Offre : {demand.application.offer.title}")
 
-        p.drawString(50, 660, "Ce document confirme le stage de l'étudiant au sein de l'entreprise.")
-        p.drawString(50, 640, "Signature Université: _____________________")
-        p.drawString(50, 620, "Signature Entreprise: _____________________")
-        p.drawString(50, 600, "Signature Étudiant: _______________________")
+            p.drawString(50, 660, "Ce document confirme le stage de l'étudiant au sein de l'entreprise.")
+            p.drawString(50, 640, "Signature Université: _____________________")
+            p.drawString(50, 620, "Signature Entreprise: _____________________")
+            p.drawString(50, 600, "Signature Étudiant: _______________________")
 
-        p.showPage()
-        p.save()
+            p.showPage()
+            p.save()
 
-        buffer.seek(0)
-        pdf_data = buffer.getvalue()
+            buffer.seek(0)
+            pdf_data = buffer.getvalue()
 
-        # Send by email
-        email = EmailMessage(
-            subject="Convention de Stage",
-            body="Veuillez trouver ci-joint votre convention de stage.",
-            to=[request.user.email]
-        )
-        email.attach("Convention_de_Stage.pdf", pdf_data, "application/pdf")
-        email.send()
+            # Send by email
+            email = EmailMessage(
+                subject="Convention de Stage",
+                body="Veuillez trouver ci-joint votre convention de stage.",
+                to=[request.user.email]
+            )
+            email.attach("Convention_de_Stage.pdf", pdf_data, "application/pdf")
+            email.send()
 
-        return Response({"message": "Convention sent by email."})
+            return Response({"message": "Convention sent by email."})
 
-    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-    def generate_letter(self, request, pk=None):
-        demand = self.get_object()
+        @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+        def generate_letter(self, request, pk=None):
+            demand = self.get_object()
 
-        if request.user != demand.student:
-            return Response({"error": "You can generate only your own internship documents."}, status=403)
+            if request.user != demand.student:
+                return Response({"error": "You can generate only your own internship documents."}, status=403)
 
-        if demand.status != "approved":
-            return Response({"error": "University has not approved this internship yet."}, status=400)
+            if demand.status != "approved":
+                return Response({"error": "University has not approved this internship yet."}, status=400)
 
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import A4
-        from django.core.mail import EmailMessage
-        from io import BytesIO
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import A4
+            from django.core.mail import EmailMessage
+            from io import BytesIO
 
-        buffer = BytesIO()
-        p = canvas.Canvas(buffer, pagesize=A4)
+            buffer = BytesIO()
+            p = canvas.Canvas(buffer, pagesize=A4)
 
-        p.setFont("Helvetica", 16)
-        p.drawString(50, 800, "Lettre d'Affectation")
+            p.setFont("Helvetica", 16)
+            p.drawString(50, 800, "Lettre d'Affectation")
 
-        p.setFont("Helvetica", 12)
-        p.drawString(50, 760, f"Université : {demand.university.name}")
-        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
-        p.drawString(50, 720, f"Affectation : {demand.application.offer.company.name}")
+            p.setFont("Helvetica", 12)
+            p.drawString(50, 760, f"Université : {demand.university.name}")
+            p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+            p.drawString(50, 720, f"Affectation : {demand.application.offer.company.name}")
 
-        p.drawString(50, 700, "L'étudiant est affecté officiellement à l'entreprise susmentionnée.")
-        p.drawString(50, 680, "Signature de l'Université : ____________________")
+            p.drawString(50, 700, "L'étudiant est affecté officiellement à l'entreprise susmentionnée.")
+            p.drawString(50, 680, "Signature de l'Université : ____________________")
 
-        p.showPage()
-        p.save()
+            p.showPage()
+            p.save()
 
-        buffer.seek(0)
-        pdf_data = buffer.getvalue()
+            buffer.seek(0)
+            pdf_data = buffer.getvalue()
 
-        email = EmailMessage(
-            subject="Lettre d'Affectation",
-            body="Veuillez trouver ci-joint votre lettre d’affectation.",
-            to=[request.user.email]
-        )
-        email.attach("Lettre_Affectation.pdf", pdf_data, "application/pdf")
-        email.send()
+            email = EmailMessage(
+                subject="Lettre d'Affectation",
+                body="Veuillez trouver ci-joint votre lettre d’affectation.",
+                to=[request.user.email]
+            )
+            email.attach("Lettre_Affectation.pdf", pdf_data, "application/pdf")
+            email.send()
 
-        return Response({"message": "Lettre d'affectation sent by email."})
+            return Response({"message": "Lettre d'affectation sent by email."})
 

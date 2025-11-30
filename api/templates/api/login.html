@@ -461,6 +461,7 @@
 
         if (res.ok) {
           localStorage.setItem("access", data.access);
+          localStorage.setItem("role", data.user.role);
           localStorage.setItem("refresh", data.refresh);
           localStorage.setItem("firstname", data.user.first_name);
 

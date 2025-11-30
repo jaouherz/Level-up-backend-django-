@@ -1,76 +1,485 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Internship Demands</title>
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-</head>
+{% extends 'recruiting/base.html' %}
 
-<body class="p-4">
+{% block title %}Internship Demands - RH{% endblock %}
 
-<h2 class="mb-3">Pending Internship Demands</h2>
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="h2 mb-1">Internship Demands</h1>
+                <p class="text-muted">Review and manage internship approval requests from students</p>
+            </div>
+            <div>
+                <span class="badge bg-primary p-2">
+                    <i class="bi bi-clipboard-data me-1"></i>
+                    <span id="demandCount">0</span> Demands
+                </span>
+            </div>
+        </div>
+    </div>
 
-<div id="demandContainer"></div>
-
-<script>
-const token = localStorage.getItem("access");
-
-async function loadDemands() {
-    const res = await fetch("/api/internship-demands/university_demands/", {
-        headers: { "Authorization": "Bearer " + token }
-    });
-
-    if (!res.ok) {
-        document.getElementById("demandContainer").innerHTML =
-            "<p class='text-danger'>Error loading demands.</p>";
-        return;
-    }
-
-    const demands = await res.json();
-    const container = document.getElementById("demandContainer");
-    container.innerHTML = "";
-
-    demands.forEach(d => {
-        container.innerHTML += `
-            <div class="card mb-3 shadow">
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
                 <div class="card-body">
-                    <h5>Student: ${d.student}</h5>
-                    <p>Application ID: ${d.application}</p>
-                    <p>Status: <strong>${d.status}</strong></p>
-
-                    ${d.status === "pending" ? `
-                    <button class="btn btn-success me-2" onclick="approve(${d.id})">
-                        Approve
-                    </button>
-                    <button class="btn btn-danger" onclick="reject(${d.id})">
-                        Reject
-                    </button>
-                    ` : ""}
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Pending Demands
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingCount">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock-history fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
                 </div>
             </div>
-        `;
-    });
-}
+        </div>
 
-async function approve(id) {
-    await fetch(`/api/internship-demands/${id}/approve/`, {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + token }
-    });
-    loadDemands();
-}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Approved
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="approvedCount">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-async function reject(id) {
-    await fetch(`/api/internship-demands/${id}/reject/`, {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + token }
-    });
-    loadDemands();
-}
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Rejected
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="rejectedCount">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-x-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-loadDemands();
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                This Month
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="monthCount">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-calendar-month fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="demandTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
+                        <i class="bi bi-clock-history me-1"></i>Pending
+                        <span class="badge bg-warning ms-1" id="pendingBadge">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="approved-tab" data-bs-toggle="tab" data-bs-target="#approved" type="button" role="tab">
+                        <i class="bi bi-check-circle me-1"></i>Approved
+                        <span class="badge bg-success ms-1" id="approvedBadge">0</span>
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="rejected-tab" data-bs-toggle="tab" data-bs-target="#rejected" type="button" role="tab">
+                        <i class="bi bi-x-circle me-1"></i>Rejected
+                        <span class="badge bg-danger ms-1" id="rejectedBadge">0</span>
+                    </button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="demandTabContent">
+        <!-- Pending Demands -->
+        <div class="tab-pane fade show active" id="pending" role="tabpanel">
+            <div id="pendingContainer" class="row">
+                <!-- Pending demands will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Approved Demands -->
+        <div class="tab-pane fade" id="approved" role="tabpanel">
+            <div id="approvedContainer" class="row">
+                <!-- Approved demands will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Rejected Demands -->
+        <div class="tab-pane fade" id="rejected" role="tabpanel">
+            <div id="rejectedContainer" class="row">
+                <!-- Rejected demands will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Empty States -->
+    <div id="emptyPending" class="empty-state d-none">
+        <i class="bi bi-check-circle"></i>
+        <h4>No pending demands</h4>
+        <p class="text-muted">All internship demands have been processed.</p>
+    </div>
+
+    <div id="emptyApproved" class="empty-state d-none">
+        <i class="bi bi-clipboard-check"></i>
+        <h4>No approved demands</h4>
+        <p class="text-muted">Approved internship demands will appear here.</p>
+    </div>
+
+    <div id="emptyRejected" class="empty-state d-none">
+        <i class="bi bi-clipboard-x"></i>
+        <h4>No rejected demands</h4>
+        <p class="text-muted">Rejected internship demands will appear here.</p>
+    </div>
+</div>
+
+<style>
+    .page-header {
+        padding: 1rem 0;
+        border-bottom: 1px solid #e9ecef;
+        margin-bottom: 2rem;
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+    
+    .demand-card {
+        border-left: 4px solid;
+    }
+    
+    .demand-pending {
+        border-left-color: #f6c23e;
+    }
+    
+    .demand-approved {
+        border-left-color: #1cc88a;
+    }
+    
+    .demand-rejected {
+        border-left-color: #e74a3b;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #dee2e6;
+    }
+    
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+    
+    .student-id-badge {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        font-weight: 600;
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+        border-radius: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .student-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .student-info {
+        flex: 1;
+    }
+    
+    .view-details-btn {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        border: none;
+        border-radius: 6px;
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+        transition: all 0.3s ease;
+    }
+    
+    .view-details-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(78, 115, 223, 0.3);
+    }
+</style>
+
+<script>
+    const token = localStorage.getItem("access");
+
+    async function loadDemands() {
+        try {
+            const res = await fetch("/api/internship-demands/university_demands/", {
+                headers: { "Authorization": "Bearer " + token }
+            });
+
+            if (!res.ok) {
+                throw new Error('Failed to load demands');
+            }
+
+            const demands = await res.json();
+            
+            console.log(demands)
+
+            // Count demands by status
+            const pendingCount = demands.filter(d => d.status === "pending").length;
+            const approvedCount = demands.filter(d => d.status === "approved").length;
+            const rejectedCount = demands.filter(d => d.status === "rejected").length;
+            
+            // Update counters
+            document.getElementById('demandCount').textContent = demands.length;
+            document.getElementById('pendingCount').textContent = pendingCount;
+            document.getElementById('approvedCount').textContent = approvedCount;
+            document.getElementById('rejectedCount').textContent = rejectedCount;
+            document.getElementById('pendingBadge').textContent = pendingCount;
+            document.getElementById('approvedBadge').textContent = approvedCount;
+            document.getElementById('rejectedBadge').textContent = rejectedCount;
+            
+            // This month count (simplified - you might want to implement proper date filtering)
+            document.getElementById('monthCount').textContent = demands.length;
+
+            // Render demands by status
+            renderDemands(demands.filter(d => d.status === "pending"), 'pendingContainer', 'pending');
+            renderDemands(demands.filter(d => d.status === "approved"), 'approvedContainer', 'approved');
+            renderDemands(demands.filter(d => d.status === "rejected"), 'rejectedContainer', 'rejected');
+            
+            // Show/hide empty states
+            toggleEmptyState('emptyPending', pendingCount === 0);
+            toggleEmptyState('emptyApproved', approvedCount === 0);
+            toggleEmptyState('emptyRejected', rejectedCount === 0);
+
+        } catch (error) {
+            console.error("Error loading demands:", error);
+            document.getElementById("pendingContainer").innerHTML = `
+                <div class="col-12">
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>
+                        Failed to load demands. Please try again.
+                    </div>
+                </div>
+            `;
+        }
+    }
+
+    function renderDemands(demands, containerId, status) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+
+        demands.forEach(d => {
+            const demandCard = document.createElement("div");
+            demandCard.className = "col-lg-6 col-xl-4 mb-4";
+            
+            const statusClass = `demand-${status}`;
+            const statusBadge = getStatusBadge(status);
+            
+            // Extract student ID from the student field or use a default
+            const studentId = extractStudentId(d.student) || 'N/A';
+            
+            demandCard.innerHTML = `
+                <div class="card demand-card ${statusClass} h-100">
+                    <div class="card-body">
+                        <!-- Student Header with ID and View Details Button -->
+                        <div class="student-header">
+                            <div class="student-info">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h5 class="card-title mb-0 me-2">${d.student}</h5>
+                                    <span class="student-id-badge">
+                                        <i class="bi bi-person-badge me-1"></i>ID: ${studentId}
+                                    </span>
+                                </div>
+                                <p class="text-muted small mb-0">
+                                    <i class="bi bi-file-text me-1"></i>Application: ${d.application}
+                                </p>
+                            </div>
+                            ${statusBadge}
+                        </div>
+                        
+                        ${d.description ? `
+                            <div class="mb-3">
+                                <p class="card-text small text-muted mb-0">${d.description}</p>
+                            </div>
+                        ` : ''}
+                        
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <small class="text-muted">
+                                <i class="bi bi-calendar me-1"></i>
+                                ${d.created_at ? new Date(d.created_at).toLocaleDateString() : 'Unknown date'}
+                            </small>
+                            
+                            <div class="action-buttons">
+                                <!-- View Details Button - Always Visible -->
+                                <button class="btn btn-primary btn-sm view-details-btn" onclick="viewStudentDetails(${studentId})">
+                                    <i class="bi bi-eye me-1"></i>View Details
+                                </button>
+                                
+                                ${status === "pending" ? `
+                                <!-- Approve/Reject Buttons - Only for Pending -->
+                                <button class="btn btn-success btn-sm" onclick="approve(${d.id})">
+                                    <i class="bi bi-check-lg me-1"></i>Approve
+                                </button>
+                                <button class="btn btn-danger btn-sm" onclick="reject(${d.id})">
+                                    <i class="bi bi-x-lg me-1"></i>Reject
+                                </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(demandCard);
+        });
+    }
+
+    function extractStudentId(studentField) {
+        // Try to extract student ID from the student field
+        // This could be in format "Student Name (ID: 123)" or just the ID
+        if (!studentField) return null;
+        
+        // If it's just a number, return it
+        if (!isNaN(studentField)) return studentField;
+        
+        // Try to extract ID from parentheses
+        const idMatch = studentField.match(/\(ID:\s*(\d+)\)/i) || studentField.match(/ID:\s*(\d+)/i);
+        if (idMatch) return idMatch[1];
+        
+        // If it contains numbers, try to extract them
+        const numberMatch = studentField.match(/\d+/);
+        if (numberMatch) return numberMatch[0];
+        
+        return null;
+    }
+
+    function viewStudentDetails(studentId) {
+        if (studentId && studentId !== 'N/A') {
+            // Navigate to student details page
+            window.location.href = `/recruiting/university/student/${studentId}/`;
+        } else {
+            alert('Student ID not available');
+        }
+    }
+
+    function getStatusBadge(status) {
+        const badges = {
+            pending: '<span class="badge bg-warning status-badge"><i class="bi bi-clock me-1"></i>Pending</span>',
+            approved: '<span class="badge bg-success status-badge"><i class="bi bi-check-lg me-1"></i>Approved</span>',
+            rejected: '<span class="badge bg-danger status-badge"><i class="bi bi-x-lg me-1"></i>Rejected</span>'
+        };
+        return badges[status] || '';
+    }
+
+    function toggleEmptyState(elementId, show) {
+        const element = document.getElementById(elementId);
+        if (show) {
+            element.classList.remove('d-none');
+        } else {
+            element.classList.add('d-none');
+        }
+    }
+
+    async function approve(id) {
+        if (!confirm('Are you sure you want to approve this internship demand?')) {
+            return;
+        }
+
+        try {
+            await fetch(`/api/internship-demands/${id}/approve/`, {
+                method: "POST",
+                headers: { "Authorization": "Bearer " + token }
+            });
+            loadDemands();
+        } catch (error) {
+            console.error("Error approving demand:", error);
+            alert('Failed to approve demand. Please try again.');
+        }
+    }
+
+    async function reject(id) {
+        if (!confirm('Are you sure you want to reject this internship demand?')) {
+            return;
+        }
+
+        try {
+            await fetch(`/api/internship-demands/${id}/reject/`, {
+                method: "POST",
+                headers: { "Authorization": "Bearer " + token }
+            });
+            loadDemands();
+        } catch (error) {
+            console.error("Error rejecting demand:", error);
+            alert('Failed to reject demand. Please try again.');
+        }
+    }
+
+    // Load demands on page load
+    document.addEventListener("DOMContentLoaded", loadDemands);
 </script>
-
-</body>
-</html>
+{% endblock %}

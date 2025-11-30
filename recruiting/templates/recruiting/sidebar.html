@@ -9,8 +9,8 @@
       </div>
     </div>
     <div class="text-center mt-2">
-      <h2 class="mb-0">Recruitment Panel</h2>
-      <small class="text-muted">Professional Suite</small>
+      <h2 class="mb-0" id="panelTitle">Recruitment Panel</h2>
+      <small class="text-muted" id="panelSubtitle">Professional Suite</small>
     </div>
   </div>
 
@@ -25,53 +25,48 @@
         </a>
       </li>
 
-      <!-- Offers Section -->
-      <li class="nav-section">
-        <small class="text-uppercase text-muted">Recruitment</small>
-      </li>
-      
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'recruiting:offer_list' %}">
-          <i class="bi bi-briefcase"></i>
-          <span>My Offers</span>
-          <span class="badge badge-zero" id="offersCountBadge">0</span>
-        </a>
-      </li>
-      
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'recruiting:offer_create' %}">
-          <i class="bi bi-plus-circle"></i>
-          <span>Create Offer</span>
-        </a>
-      </li>
+      <!-- Recruitment Section (Only for recruiters) -->
+      <div id="recruitmentSection" style="display: none;">
+        <li class="nav-section">
+          <small class="text-uppercase text-muted">Recruitment</small>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'recruiting:offer_list' %}">
+            <i class="bi bi-briefcase"></i>
+            <span>My Offers</span>
+            <span class="badge badge-zero" id="offersCountBadge">0</span>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'recruiting:offer_create' %}">
+            <i class="bi bi-plus-circle"></i>
+            <span>Create Offer</span>
+          </a>
+        </li>
+      </div>
 
-      <!-- Applications 
-      <li class="nav-item">
-        <a class="nav-link" href="#">
-          <i class="bi bi-people"></i>
-          <span>Applications</span>
-          <span class="badge bg-success">8</span>
-        </a>
-      </li>
--->
-      <!-- University Section -->
-      <li class="nav-section">
-        <small class="text-uppercase text-muted">University</small>
-      </li>
+      <!-- University Section (Only for university users) -->
+      <div id="universitySection" style="display: none;">
+        <li class="nav-section">
+          <small class="text-uppercase text-muted">University</small>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'recruiting:uni_students' %}">
-          <i class="bi bi-people"></i>
-          <span>Students</span>
-        </a>
-      </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'recruiting:uni_students' %}">
+            <i class="bi bi-people"></i>
+            <span>Students</span>
+          </a>
+        </li>
 
-      <li class="nav-item">
-        <a class="nav-link" href="{% url 'recruiting:uni_demands' %}">
-          <i class="bi bi-clipboard-data"></i>
-          <span>Demands</span>
-        </a>
-      </li>
+        <li class="nav-item">
+          <a class="nav-link" href="{% url 'recruiting:uni_demands' %}">
+            <i class="bi bi-clipboard-data"></i>
+            <span>Demands</span>
+          </a>
+        </li>
+      </div>
 
       <!-- Tools Section -->
       <li class="nav-section">
@@ -103,7 +98,7 @@
         </div>
         <div class="flex-grow-1">
           <div class="user-name" id="userFirstname">Welcome Back</div>
-          <div class="user-role text-muted">Recruiter</div>
+          <div class="user-role text-muted" id="userRoleDisplay">Recruiter</div>
         </div>
       </div>
     </div>
@@ -235,15 +230,14 @@
     font-weight: 600;
   }
   .badge-zero {
-  background-color: #6c757d;   /* Gray */
-  color: white;
-}
+    background-color: #6c757d;   /* Gray */
+    color: white;
+  }
 
-.badge-positive {
-  background-color: #28a745;   /* Green */
-  color: white;
-}
-
+  .badge-positive {
+    background-color: #28a745;   /* Green */
+    color: white;
+  }
 
   .badge.bg-success {
     background: #1cc88a;
@@ -362,45 +356,51 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", async function() {
-    // Load offers count
     try {
         const access = localStorage.getItem("access");
-        const firstname=localStorage.getItem("firstname");
-        const res = await fetch("/api/offers/my_company/", {
-            headers: { "Authorization": "Bearer " + access }
-        });
+        const firstname = localStorage.getItem("firstname");
+        const role = localStorage.getItem("role");
+        
+        // Set role-based display
+        setRoleBasedDisplay(role);
+        
+        // Load offers only for recruiters
+        if (role === 'recruiting') {
+            const res = await fetch("/api/offers/my_company/", {
+                headers: { "Authorization": "Bearer " + access }
+            });
 
-        const offers = await res.json();
-
-        const count = offers.length || 0;
-        const badge = document.getElementById("offersCountBadge");
-        const firstnameEl=document.getElementById("userFirstname");
-if (firstnameEl) {
-    firstnameEl.innerHTML = 'Welcome back <i style="color: #4e73df"><b>' + firstname + '</b></i>';
-}
-        if (badge) {
-            badge.textContent = count;
-
-            badge.classList.remove("badge-zero", "badge-positive");
-
-            if (count > 0) {
-                badge.classList.add("badge-positive");
-            } else {
-                badge.classList.add("badge-zero");
+            const offers = await res.json();
+            const count = offers.length || 0;
+            const badge = document.getElementById("offersCountBadge");
+            
+            if (badge) {
+                badge.textContent = count;
+                badge.classList.remove("badge-zero", "badge-positive");
+                if (count > 0) {
+                    badge.classList.add("badge-positive");
+                } else {
+                    badge.classList.add("badge-zero");
+                }
             }
         }
 
+        // Update user info
+        const firstnameEl = document.getElementById("userFirstname");
+        if (firstnameEl) {
+            firstnameEl.innerHTML = 'Welcome back <i style="color: #4e73df"><b>' + firstname + '</b></i>';
+        }
 
     } catch (err) {
-        console.error("Error loading offers:", err);
+        console.error("Error loading data:", err);
     }
 
     // Logout functionality
     document.getElementById('logoutBtn').addEventListener('click', function() {
-      if (confirm('Are you sure you want to sign out?')) {
-        localStorage.clear();
-        window.location.href = "/api/auth/jwt-login/";
-      }
+        if (confirm('Are you sure you want to sign out?')) {
+            localStorage.clear();
+            window.location.href = "/api/auth/jwt-login/";
+        }
     });
 
     // Active nav
@@ -408,26 +408,59 @@ if (firstnameEl) {
     const navLinks = document.querySelectorAll('.nav-link');
     
     navLinks.forEach(link => {
-      if (link.getAttribute('href') === currentPath) {
-        link.classList.add('active');
-      }
+        if (link.getAttribute('href') === currentPath) {
+            link.classList.add('active');
+        }
     });
 
     navLinks.forEach(link => {
-      link.addEventListener('click', function(e) {
-        if (this.getAttribute('href') === '#') {
-          e.preventDefault();
-        }
-        navLinks.forEach(l => l.classList.remove('active'));
-        this.classList.add('active');
-      });
+        link.addEventListener('click', function(e) {
+            if (this.getAttribute('href') === '#') {
+                e.preventDefault();
+            }
+            navLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+        });
     });
 
     // Logo fix
     const logoImage = document.querySelector('.logo-image');
     if (logoImage) {
-      logoImage.style.display = 'block';
-      logoImage.style.visibility = 'visible';
+        logoImage.style.display = 'block';
+        logoImage.style.visibility = 'visible';
     }
 });
+
+function setRoleBasedDisplay(role) {
+    const panelTitle = document.getElementById('panelTitle');
+    const panelSubtitle = document.getElementById('panelSubtitle');
+    const userRoleDisplay = document.getElementById('userRoleDisplay');
+    const recruitmentSection = document.getElementById('recruitmentSection');
+    const universitySection = document.getElementById('universitySection');
+
+    if (role === 'recruiting') {
+        // Show recruitment panel
+        if (panelTitle) panelTitle.textContent = 'Recruitment Panel';
+        if (panelSubtitle) panelSubtitle.textContent = 'Professional Suite';
+        if (userRoleDisplay) userRoleDisplay.textContent = 'Recruiter';
+        if (recruitmentSection) recruitmentSection.style.display = 'block';
+        if (universitySection) universitySection.style.display = 'none';
+    } 
+    else if (role === 'university') {
+        // Show university panel
+        if (panelTitle) panelTitle.textContent = 'University Panel';
+        if (panelSubtitle) panelSubtitle.textContent = 'Academic Management';
+        if (userRoleDisplay) userRoleDisplay.textContent = 'University Staff';
+        if (recruitmentSection) recruitmentSection.style.display = 'none';
+        if (universitySection) universitySection.style.display = 'block';
+    }
+    else {
+        // Default fallback
+        if (panelTitle) panelTitle.textContent = 'Dashboard Panel';
+        if (panelSubtitle) panelSubtitle.textContent = 'Management Suite';
+        if (userRoleDisplay) userRoleDisplay.textContent = 'User';
+        if (recruitmentSection) recruitmentSection.style.display = 'none';
+        if (universitySection) universitySection.style.display = 'none';
+    }
+}
 </script>
