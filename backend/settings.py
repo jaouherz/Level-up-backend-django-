@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'api',
     'recruiting',
     'drf_yasg',
+    'admin_side',
 
 ]
 STATIC_URL = '/static/'
