@@ -1,0 +1,694 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Users Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Users Management</h1>
+            <p class="text-muted">Manage and review all registered users in the system.</p>
+        </div>
+        <div class="d-flex">
+            <div class="input-group me-3" style="max-width: 300px;">
+                <input type="text" class="form-control" placeholder="Search users..." id="searchInput">
+                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <button class="btn btn-outline-danger" id="refreshBtn">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalUsers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Verified Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="verifiedUsers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Pending Verification
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="pendingUsers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clock fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Today's New Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayUsers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-person-plus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">All Users</h6>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-filter me-1"></i> Filter
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item" href="#" data-filter="all">All Users</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="verified">Verified</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="pending">Pending</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="student">Students</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="recruiter">Recruiters</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="university">University Staff</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="loader" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading users...</p>
+            </div>
+            
+            <div class="table-responsive" id="tableContainer" style="display: none;">
+                <table class="table table-hover" id="usersTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>GPA</th>
+                            <th>Institution</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersBody">
+                        <!-- Users will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="noUsers" class="text-center py-5" style="display: none;">
+                <i class="bi bi-people display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">No users found</h4>
+                <p class="text-muted">Try changing your filter or search criteria</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- User Details Modal -->
+<div class="modal fade" id="detailsModal" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">User Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="approveModalBtn">
+                    <i class="bi bi-check-circle me-1"></i> Approve User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-verified {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .role-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .role-student {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    
+    .role-recruiter {
+        background-color: #fce7f3;
+        color: #9d174d;
+    }
+    
+    .role-university {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+    
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+    
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #4e73df;
+        border-top: none;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .user-avatar {
+        width: 32px;
+        height: 32px;
+        background-color: #e9ecef;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+    }
+    
+    .user-name-cell {
+        display: flex;
+        align-items: center;
+    }
+    
+    .action-buttons {
+        white-space: nowrap;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const API_BASE = "http://127.0.0.1:8000";
+    const access = localStorage.getItem("access");
+    let allUsers = [];
+    let currentUserId = null;
+
+    // Check authentication
+    if (!access) {
+        alert("Please login first");
+        window.location.href = "/api/auth/jwt-login/";
+        return;
+    }
+
+    // Initialize
+    loadUsers();
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        loadUsers();
+    });
+
+    // Search functionality
+    document.getElementById('searchBtn').addEventListener('click', filterUsers);
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') filterUsers();
+    });
+
+    // Filter dropdown
+    document.querySelectorAll('[data-filter]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const filter = this.getAttribute('data-filter');
+            document.getElementById('filterDropdown').innerHTML = 
+                `<i class="bi bi-filter me-1"></i> ${this.textContent}`;
+            filterUsers(filter);
+        });
+    });
+
+    // Modal approve button
+    document.getElementById('approveModalBtn').addEventListener('click', function() {
+        if (currentUserId) {
+            approveUser(currentUserId);
+        }
+    });
+
+    // Load users
+    async function loadUsers() {
+        try {
+            showLoader();
+            
+            const res = await fetch(`${API_BASE}/api/profiles/`, {
+                headers: { 
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (!res.ok) {
+                throw new Error(`HTTP error! status: ${res.status}`);
+            }
+            
+            const data = await res.json();
+            allUsers = Array.isArray(data) ? data : [];
+            
+            updateStats(allUsers);
+            displayUsers(allUsers);
+            hideLoader();
+            
+        } catch (err) {
+            console.error("Error loading users:", err);
+            alert("Failed to load users. Please check your connection and try again.");
+            hideLoader();
+            showNoUsers();
+        }
+    }
+
+    function updateStats(users) {
+        const total = users.length;
+        const verified = users.filter(u => u.is_verified).length;
+        const pending = users.filter(u => !u.is_verified).length;
+        const today = new Date().toISOString().split('T')[0];
+        const todayCount = users.filter(u => {
+            if (!u.user?.date_joined) return false;
+            return u.user.date_joined.startsWith(today);
+        }).length;
+
+        document.getElementById('totalUsers').textContent = total;
+        document.getElementById('verifiedUsers').textContent = verified;
+        document.getElementById('pendingUsers').textContent = pending;
+        document.getElementById('todayUsers').textContent = todayCount;
+    }
+
+    function displayUsers(users) {
+        const tbody = document.getElementById("usersBody");
+        tbody.innerHTML = "";
+
+        if (users.length === 0) {
+            showNoUsers();
+            return;
+        }
+
+        users.forEach(user => {
+            const name = `${user.user?.first_name || ''} ${user.user?.last_name || ''}`.trim() || 'N/A';
+            const email = user.user?.email || 'N/A';
+            const uniOrCompany = user.university?.name ?? user.company?.name ?? "N/A";
+            const gpa = user.gpa ? parseFloat(user.gpa).toFixed(2) : "N/A";
+            
+            // Role badge
+            let roleClass = 'role-student';
+            let roleText = user.role || 'student';
+            if (user.role === 'recruiter') {
+                roleClass = 'role-recruiter';
+                roleText = 'Recruiter';
+            } else if (user.role === 'university') {
+                roleClass = 'role-university';
+                roleText = 'University';
+            } else {
+                roleText = 'Student';
+            }
+
+            // Status badge
+            const statusClass = user.is_verified ? 'status-verified' : 'status-pending';
+            const statusText = user.is_verified ? 'Verified' : 'Pending';
+
+            // Create row
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td><span class="badge bg-light text-dark">#${user.id}</span></td>
+                <td>
+                    <div class="user-name-cell">
+                        <div class="user-avatar">
+                            <i class="bi bi-person"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">${name}</div>
+                            <small class="text-muted">ID: ${user.id}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>${email}</td>
+                <td><span class="role-badge ${roleClass}">${roleText}</span></td>
+                <td>
+                    ${gpa !== 'N/A' ? 
+                        `<span class="badge ${parseFloat(gpa) >= 3.0 ? 'bg-success' : 'bg-warning'}">${gpa}</span>` : 
+                        '<span class="text-muted">N/A</span>'}
+                </td>
+                <td>${uniOrCompany}</td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary me-1 view-btn" data-user-id="${user.id}">
+                        <i class="bi bi-eye"></i> View
+                    </button>
+                    ${!user.is_verified ? 
+                        `<button class="btn btn-sm btn-success approve-btn" data-user-id="${user.id}">
+                            <i class="bi bi-check-circle"></i> Approve
+                        </button>` : 
+                        `<button class="btn btn-sm btn-outline-secondary" disabled>
+                            <i class="bi bi-check-circle"></i> Approved
+                        </button>`}
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Add event listeners to buttons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                const user = allUsers.find(u => u.id == userId);
+                if (user) showDetails(user);
+            });
+        });
+
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.getAttribute('data-user-id');
+                approveUser(userId);
+            });
+        });
+
+        document.getElementById('tableContainer').style.display = 'block';
+        document.getElementById('noUsers').style.display = 'none';
+    }
+
+    function filterUsers(filterType = null) {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        let filteredUsers = allUsers;
+
+        // Apply search filter
+        if (searchTerm) {
+            filteredUsers = filteredUsers.filter(user => {
+                const name = `${user.user?.first_name || ''} ${user.user?.last_name || ''}`.toLowerCase();
+                const email = user.user?.email?.toLowerCase() || '';
+                const role = user.role?.toLowerCase() || '';
+                const institution = (user.university?.name || user.company?.name || '').toLowerCase();
+                
+                return name.includes(searchTerm) || 
+                       email.includes(searchTerm) || 
+                       role.includes(searchTerm) ||
+                       institution.includes(searchTerm);
+            });
+        }
+
+        // Apply type filter
+        if (filterType && filterType !== 'all') {
+            if (filterType === 'verified') {
+                filteredUsers = filteredUsers.filter(u => u.is_verified);
+            } else if (filterType === 'pending') {
+                filteredUsers = filteredUsers.filter(u => !u.is_verified);
+            } else if (filterType === 'student') {
+                filteredUsers = filteredUsers.filter(u => u.role === 'student');
+            } else if (filterType === 'recruiter') {
+                filteredUsers = filteredUsers.filter(u => u.role === 'recruiter');
+            } else if (filterType === 'university') {
+                filteredUsers = filteredUsers.filter(u => u.role === 'university');
+            }
+        }
+
+        displayUsers(filteredUsers);
+        
+        if (filteredUsers.length === 0) {
+            showNoUsers();
+        }
+    }
+
+    // Approve user function
+    async function approveUser(userId) {
+        if (!confirm("Are you sure you want to approve this user? This will grant them full access to the system.")) {
+            return;
+        }
+        
+        try {
+            const response = await fetch(`${API_BASE}/api/approve-user/${userId}/`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (response.ok) {
+                // Find and update the user in allUsers
+                const userIndex = allUsers.findIndex(u => u.id == userId);
+                if (userIndex !== -1) {
+                    allUsers[userIndex].is_verified = true;
+                }
+                
+                // Update the table
+                displayUsers(allUsers);
+                updateStats(allUsers);
+                
+                // Close modal if open
+                const modal = bootstrap.Modal.getInstance(document.getElementById('detailsModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Show success message
+                showToast('User approved successfully!', 'success');
+                
+            } else {
+                const errorData = await response.json();
+                showToast(`Failed to approve user: ${errorData.detail || 'Unknown error'}`, 'danger');
+            }
+        } catch (error) {
+            console.error("Error approving user:", error);
+            showToast("Network error. Please try again.", 'danger');
+        }
+    }
+
+    // Show user details in modal
+    function showDetails(user) {
+        currentUserId = user.id;
+        
+        const name = `${user.user?.first_name || ''} ${user.user?.last_name || ''}`.trim() || 'N/A';
+        const email = user.user?.email || 'N/A';
+        const skills = user.skills?.length ? user.skills.join(", ") : "None";
+        const certs = user.certifications?.length ? user.certifications.join(", ") : "None";
+        const university = user.university ? `${user.university.name}, ${user.university.city || ''}, ${user.university.country || ''}` : "N/A";
+        const company = user.company ? `${user.company.name}, ${user.company.city || ''}, ${user.company.country || ''}` : "N/A";
+        
+        // Build modal content
+        const modalContent = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Full Name</label>
+                        <div class="fw-bold">${name}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Email</label>
+                        <div class="fw-bold">${email}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Role</label>
+                        <div>
+                            <span class="role-badge ${user.role === 'recruiter' ? 'role-recruiter' : user.role === 'university' ? 'role-university' : 'role-student'}">
+                                ${user.role === 'recruiter' ? 'Recruiter' : user.role === 'university' ? 'University Staff' : 'Student'}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Field of Study</label>
+                        <div class="fw-bold">${user.field_of_study || "N/A"}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">GPA</label>
+                        <div class="fw-bold">${user.gpa ? parseFloat(user.gpa).toFixed(2) : "N/A"}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">University</label>
+                        <div class="fw-bold">${university}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Company</label>
+                        <div class="fw-bold">${company}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Status</label>
+                        <div>
+                            <span class="status-badge ${user.is_verified ? 'status-verified' : 'status-pending'}">
+                                ${user.is_verified ? 'Verified' : 'Pending Approval'}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Skills</label>
+                        <div class="fw-bold">${skills}</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Certifications</label>
+                        <div class="fw-bold">${certs}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-3">
+                <label class="form-label text-muted">Date Joined</label>
+                <div class="fw-bold">${user.user?.date_joined ? new Date(user.user.date_joined).toLocaleDateString() : 'N/A'}</div>
+            </div>
+        `;
+        
+        // Update modal content
+        document.getElementById('modalBody').innerHTML = modalContent;
+        
+        // Show/hide approve button in modal
+        const approveBtn = document.getElementById('approveModalBtn');
+        if (!user.is_verified) {
+            approveBtn.style.display = 'block';
+            approveBtn.onclick = function() {
+                approveUser(user.id);
+            };
+        } else {
+            approveBtn.style.display = 'none';
+        }
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('detailsModal'));
+        modal.show();
+    }
+
+    function showLoader() {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('tableContainer').style.display = 'none';
+        document.getElementById('noUsers').style.display = 'none';
+    }
+
+    function hideLoader() {
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    function showNoUsers() {
+        document.getElementById('tableContainer').style.display = 'none';
+        document.getElementById('noUsers').style.display = 'block';
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Remove existing toast if any
+        const existingToast = document.querySelector('.toast-container');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        // Create toast container
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        
+        // Create toast
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+        
+        // Show toast
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: 3000
+        });
+        bsToast.show();
+        
+        // Remove toast after it hides
+        toast.addEventListener('hidden.bs.toast', function() {
+            toastContainer.remove();
+        });
+    }
+});
+</script>
+{% endblock %}

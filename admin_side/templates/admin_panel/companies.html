@@ -1,0 +1,652 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Companies Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Companies Management</h1>
+            <p class="text-muted">View and manage all registered companies in the system.</p>
+        </div>
+        <div class="d-flex">
+            <div class="input-group me-3" style="max-width: 300px;">
+                <input type="text" class="form-control" placeholder="Search companies..." id="searchInput">
+                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <button class="btn btn-outline-success" id="refreshBtn">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Companies
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalCompanies">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Active Recruiters
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeRecruiters">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Active Offers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeOffers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-briefcase fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Today's New
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayCompanies">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-building-add fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Companies Table -->
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">All Companies</h6>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-filter me-1"></i> Filter by Industry
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown" id="industryFilter">
+                    <!-- Industries will be loaded dynamically -->
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="loader" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading companies...</p>
+            </div>
+            
+            <div class="table-responsive" id="tableContainer" style="display: none;">
+                <table class="table table-hover" id="companiesTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Company</th>
+                            <th>Industry</th>
+                            <th>Contact</th>
+                            <th>Location</th>
+                            <th>Recruiters</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="companiesBody">
+                        <!-- Companies will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="noCompanies" class="text-center py-5" style="display: none;">
+                <i class="bi bi-building display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">No companies found</h4>
+                <p class="text-muted">Try changing your filter or search criteria</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Company Details Modal -->
+<div class="modal fade" id="companyModal" tabindex="-1" aria-labelledby="companyModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="companyModalLabel">Company Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .industry-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .tech-industry {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    
+    .finance-industry {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .health-industry {
+        background-color: #fce7f3;
+        color: #9d174d;
+    }
+    
+    .edu-industry {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .other-industry {
+        background-color: #e5e7eb;
+        color: #374151;
+    }
+    
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+    
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+    
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #4e73df;
+        border-top: none;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .company-logo-cell {
+        display: flex;
+        align-items: center;
+    }
+    
+    .company-logo-placeholder {
+        width: 40px;
+        height: 40px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        color: #6c757d;
+        font-size: 1.2rem;
+    }
+    
+    .website-link {
+        color: #0d6efd;
+        text-decoration: none;
+    }
+    
+    .website-link:hover {
+        text-decoration: underline;
+    }
+    
+    .recruiters-count {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .action-buttons {
+        white-space: nowrap;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const API_BASE = "http://127.0.0.1:8000";
+    const access = localStorage.getItem("access");
+    let allCompanies = [];
+    let allRecruiters = [];
+
+    // Check authentication
+    if (!access) {
+        alert("Please login first");
+        window.location.href = "/api/auth/jwt-login/";
+        return;
+    }
+
+    // Initialize
+    loadCompanies();
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        loadCompanies();
+    });
+
+    // Search functionality
+    document.getElementById('searchBtn').addEventListener('click', filterCompanies);
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') filterCompanies();
+    });
+
+    // Load companies
+    async function loadCompanies() {
+        try {
+            showLoader();
+            
+            // Load companies
+            const companiesRes = await fetch(`${API_BASE}/api/companies/`, {
+                headers: { 
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (!companiesRes.ok) {
+                throw new Error(`HTTP error! status: ${companiesRes.status}`);
+            }
+            
+            const companiesData = await companiesRes.json();
+            allCompanies = Array.isArray(companiesData) ? companiesData : [];
+            
+            // Load recruiters to count per company
+            const recruitersRes = await fetch(`${API_BASE}/api/profiles/`, {
+                headers: { 
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (recruitersRes.ok) {
+                const recruitersData = await recruitersRes.json();
+                allRecruiters = Array.isArray(recruitersData) ? recruitersData.filter(r => r.role === 'recruiter') : [];
+            }
+            
+            updateStats(allCompanies, allRecruiters);
+            populateIndustryFilter(allCompanies);
+            displayCompanies(allCompanies);
+            hideLoader();
+            
+        } catch (err) {
+            console.error("Error loading companies:", err);
+            alert("Failed to load companies. Please check your connection and try again.");
+            hideLoader();
+            showNoCompanies();
+        }
+    }
+
+    function updateStats(companies, recruiters) {
+        const total = companies.length;
+        
+        // Count recruiters per company
+        const recruiterCounts = {};
+        recruiters.forEach(recruiter => {
+            if (recruiter.company?.id) {
+                const companyId = recruiter.company.id;
+                recruiterCounts[companyId] = (recruiterCounts[companyId] || 0) + 1;
+            }
+        });
+        
+        const activeRecruiters = Object.keys(recruiterCounts).length;
+        
+        // For active offers, we would need to load offers data
+        const activeOffers = 0; // You can implement this if you have offers API
+        
+        const today = new Date().toISOString().split('T')[0];
+        const todayCount = companies.filter(c => {
+            if (!c.created_at) return false;
+            return c.created_at.startsWith(today);
+        }).length;
+
+        document.getElementById('totalCompanies').textContent = total;
+        document.getElementById('activeRecruiters').textContent = activeRecruiters;
+        document.getElementById('activeOffers').textContent = activeOffers;
+        document.getElementById('todayCompanies').textContent = todayCount;
+    }
+
+    function populateIndustryFilter(companies) {
+        const filterMenu = document.getElementById('industryFilter');
+        filterMenu.innerHTML = '';
+        
+        // Get unique industries
+        const industries = [...new Set(companies.map(c => c.industry).filter(Boolean))].sort();
+        
+        // Add "All Industries" option
+        const allItem = document.createElement('li');
+        allItem.innerHTML = `<a class="dropdown-item" href="#" data-industry="all">All Industries</a>`;
+        filterMenu.appendChild(allItem);
+        
+        // Add separator
+        const divider = document.createElement('li');
+        divider.innerHTML = '<hr class="dropdown-divider">';
+        filterMenu.appendChild(divider);
+        
+        // Add each industry
+        industries.forEach(industry => {
+            const item = document.createElement('li');
+            item.innerHTML = `<a class="dropdown-item" href="#" data-industry="${industry}">${industry}</a>`;
+            filterMenu.appendChild(item);
+        });
+        
+        // Add event listeners to filter items
+        document.querySelectorAll('#industryFilter .dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const industry = this.getAttribute('data-industry');
+                document.getElementById('filterDropdown').innerHTML = 
+                    `<i class="bi bi-filter me-1"></i> ${industry === 'all' ? 'All Industries' : industry}`;
+                filterCompanies(industry);
+            });
+        });
+    }
+
+    function displayCompanies(companies) {
+        const tbody = document.getElementById("companiesBody");
+        tbody.innerHTML = "";
+
+        if (companies.length === 0) {
+            showNoCompanies();
+            return;
+        }
+
+        companies.forEach(company => {
+            // Count recruiters for this company
+            const recruitersCount = allRecruiters.filter(r => 
+                r.company?.id === company.id
+            ).length;
+            
+            // Determine industry badge class
+            let industryClass = 'other-industry';
+            if (company.industry) {
+                const industryLower = company.industry.toLowerCase();
+                if (industryLower.includes('tech') || industryLower.includes('software') || industryLower.includes('it')) {
+                    industryClass = 'tech-industry';
+                } else if (industryLower.includes('finance') || industryLower.includes('bank') || industryLower.includes('insurance')) {
+                    industryClass = 'finance-industry';
+                } else if (industryLower.includes('health') || industryLower.includes('medical') || industryLower.includes('care')) {
+                    industryClass = 'health-industry';
+                } else if (industryLower.includes('education') || industryLower.includes('university') || industryLower.includes('school')) {
+                    industryClass = 'edu-industry';
+                }
+            }
+            
+            // Create row
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td><span class="badge bg-light text-dark">#${company.id}</span></td>
+                <td>
+                    <div class="company-logo-cell">
+                        <div class="company-logo-placeholder">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">${company.name || 'N/A'}</div>
+                            <small class="text-muted">ID: ${company.id}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    ${company.industry ? 
+                        `<span class="industry-badge ${industryClass}">${company.industry}</span>` : 
+                        '<span class="text-muted">Not specified</span>'}
+                </td>
+                <td>
+                    <div>
+                        ${company.email ? `<div><i class="bi bi-envelope me-1"></i> ${company.email}</div>` : ''}
+                        ${company.phone ? `<div class="mt-1"><i class="bi bi-phone me-1"></i> ${company.phone}</div>` : ''}
+                        ${company.website ? 
+                            `<div class="mt-1">
+                                <a href="${company.website}" class="website-link" target="_blank">
+                                    <i class="bi bi-globe me-1"></i> Website
+                                </a>
+                            </div>` : 
+                            ''}
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        ${company.city ? `<div class="fw-bold">${company.city}</div>` : ''}
+                        ${company.country ? `<div class="text-muted">${company.country}</div>` : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="recruiters-count">
+                        <i class="bi bi-people me-1"></i> ${recruitersCount} recruiter${recruitersCount !== 1 ? 's' : ''}
+                    </div>
+                    ${recruitersCount > 0 ? 
+                        `<small class="text-muted">Active</small>` : 
+                        `<small class="text-warning">No recruiters</small>`}
+                </td>
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary me-1 view-btn" data-company-id="${company.id}">
+                        <i class="bi bi-eye"></i> View
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Add event listeners to view buttons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const companyId = this.getAttribute('data-company-id');
+                const company = allCompanies.find(c => c.id == companyId);
+                if (company) showCompanyDetails(company);
+            });
+        });
+
+        document.getElementById('tableContainer').style.display = 'block';
+        document.getElementById('noCompanies').style.display = 'none';
+    }
+
+    function filterCompanies(industryFilter = null) {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        let filteredCompanies = allCompanies;
+
+        // Apply search filter
+        if (searchTerm) {
+            filteredCompanies = filteredCompanies.filter(company => {
+                const name = company.name?.toLowerCase() || '';
+                const industry = company.industry?.toLowerCase() || '';
+                const city = company.city?.toLowerCase() || '';
+                const country = company.country?.toLowerCase() || '';
+                
+                return name.includes(searchTerm) || 
+                       industry.includes(searchTerm) || 
+                       city.includes(searchTerm) ||
+                       country.includes(searchTerm);
+            });
+        }
+
+        // Apply industry filter
+        if (industryFilter && industryFilter !== 'all') {
+            filteredCompanies = filteredCompanies.filter(company => 
+                company.industry === industryFilter
+            );
+        }
+
+        displayCompanies(filteredCompanies);
+        
+        if (filteredCompanies.length === 0) {
+            showNoCompanies();
+        }
+    }
+
+    // Show company details in modal
+    function showCompanyDetails(company) {
+        // Count recruiters for this company
+        const recruiters = allRecruiters.filter(r => r.company?.id === company.id);
+        
+        // Build modal content
+        const modalContent = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Company Name</label>
+                        <div class="fw-bold">${company.name || 'N/A'}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Industry</label>
+                        <div class="fw-bold">${company.industry || 'Not specified'}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Description</label>
+                        <div class="fw-bold">${company.description || 'No description available'}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Location</label>
+                        <div>
+                            <div class="fw-bold">${company.city || 'N/A'}, ${company.country || 'N/A'}</div>
+                            ${company.address ? `<small class="text-muted">${company.address}</small>` : ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Contact Information</label>
+                        <div>
+                            ${company.email ? `<div><i class="bi bi-envelope me-1"></i> ${company.email}</div>` : ''}
+                            ${company.phone ? `<div class="mt-2"><i class="bi bi-phone me-1"></i> ${company.phone}</div>` : ''}
+                            ${company.website ? 
+                                `<div class="mt-2">
+                                    <a href="${company.website}" class="website-link" target="_blank">
+                                        <i class="bi bi-globe me-1"></i> ${company.website}
+                                    </a>
+                                </div>` : 
+                                ''}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Associated Recruiters</label>
+                        <div class="fw-bold">${recruiters.length}</div>
+                        ${recruiters.length > 0 ? 
+                            `<small class="text-muted">Active recruiters managing offers</small>` : 
+                            `<small class="text-warning">No recruiters associated</small>`}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Registration Date</label>
+                        <div class="fw-bold">${company.created_at ? new Date(company.created_at).toLocaleDateString() : 'N/A'}</div>
+                    </div>
+                </div>
+            </div>
+            
+            ${recruiters.length > 0 ? `
+                <div class="mt-4">
+                    <h6 class="mb-3">Recruiters List</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${recruiters.map(recruiter => `
+                                    <tr>
+                                        <td>${recruiter.user?.first_name || ''} ${recruiter.user?.last_name || ''}</td>
+                                        <td>${recruiter.user?.email || 'N/A'}</td>
+                                        <td>
+                                            <span class="badge ${recruiter.is_verified ? 'bg-success' : 'bg-warning'}">
+                                                ${recruiter.is_verified ? 'Verified' : 'Pending'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        // Update modal content
+        document.getElementById('modalBody').innerHTML = modalContent;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('companyModal'));
+        modal.show();
+    }
+
+    function showLoader() {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('tableContainer').style.display = 'none';
+        document.getElementById('noCompanies').style.display = 'none';
+    }
+
+    function hideLoader() {
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    function showNoCompanies() {
+        document.getElementById('tableContainer').style.display = 'none';
+        document.getElementById('noCompanies').style.display = 'block';
+        document.getElementById('loader').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

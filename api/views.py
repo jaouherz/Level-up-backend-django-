@@ -9,6 +9,9 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView
 from rest_framework.exceptions import PermissionDenied
+#from api import serializers
+from rest_framework import serializers
+
 from api.forms import RegisterForm, LoginForm
 
 User = get_user_model()
@@ -162,6 +165,46 @@ class ApplicationViewSet(viewsets.GenericViewSet,
 # =========================
 # 👤 PROFILES
 # =========================
+class UserNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ["id", "email", "first_name", "last_name"]
+
+# Nested serializer for university
+class UniversityNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = University
+        fields = ["id", "name", "city", "country"]
+
+# Nested serializer for company
+class CompanyNestedSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Company
+        fields = ["id", "name", "city", "country"]
+
+# Main Profile serializer
+class ProfileSerializer(serializers.ModelSerializer):
+    user = UserNestedSerializer(read_only=True)
+    university = UniversityNestedSerializer(read_only=True)
+    company = CompanyNestedSerializer(read_only=True)
+    skills = serializers.StringRelatedField(many=True)
+    certifications = serializers.StringRelatedField(many=True)
+
+    class Meta:
+        model = Profile
+        fields = [
+            "id",
+            "user",
+            "role",
+            "field_of_study",
+            "gpa",
+            "score",
+            "university",
+            "company",
+            "skills",
+            "certifications",
+            "is_verified",
+        ]
 class ProfileViewSet(viewsets.ModelViewSet):
     queryset = Profile.objects.select_related('user').prefetch_related('skills', 'certifications')
     serializer_class = ProfileSerializer
@@ -602,6 +645,28 @@ class CompanyViewSet(viewsets.ModelViewSet):
     queryset = Company.objects.all()
     serializer_class = CompanySerializer
     permission_classes = [permissions.AllowAny]
+    
+class InternshipDemandSerializer(serializers.ModelSerializer):
+    student = serializers.SlugRelatedField(
+        slug_field='email',
+        read_only=True
+    )
+    university = serializers.SlugRelatedField(
+        slug_field="name",
+        read_only=True
+    )
+    application = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    offer_title = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InternshipDemand
+        fields = '__all__'  
+
+    def get_offer_title(self, obj):
+        if obj.application and obj.application.offer:
+            return obj.application.offer.title
+        return None
 
 class InternshipDemandViewSet(viewsets.ModelViewSet):
     queryset = InternshipDemand.objects.select_related("student", "application", "university")
@@ -647,7 +712,6 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_demands(self, request):
-        """ Student → list all internship demands """
         user = request.user
         demands = InternshipDemand.objects.filter(student=user)
         serializer = self.get_serializer(demands, many=True)

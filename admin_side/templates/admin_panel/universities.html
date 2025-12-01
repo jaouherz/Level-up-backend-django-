@@ -1,0 +1,713 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Universities Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Universities Management</h1>
+            <p class="text-muted">View and manage all registered universities in the system.</p>
+        </div>
+        <div class="d-flex">
+            <div class="input-group me-3" style="max-width: 300px;">
+                <input type="text" class="form-control" placeholder="Search universities..." id="searchInput">
+                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <button class="btn btn-outline-primary" id="refreshBtn">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Universities
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalUniversities">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-mortarboard fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Students
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeStudents">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-people fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Active Staff
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeStaff">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-person-badge fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Today's New
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="todayUniversities">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-building-add fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Universities Table -->
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">All Universities</h6>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-filter me-1"></i> Filter by Country
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown" id="countryFilter">
+                    <!-- Countries will be loaded dynamically -->
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="loader" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading universities...</p>
+            </div>
+            
+            <div class="table-responsive" id="tableContainer" style="display: none;">
+                <table class="table table-hover" id="universitiesTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>University</th>
+                            <th>Location</th>
+                            <th>Contact</th>
+                            <th>Domain</th>
+                            <th>Students</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="universitiesBody">
+                        <!-- Universities will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="noUniversities" class="text-center py-5" style="display: none;">
+                <i class="bi bi-mortarboard display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">No universities found</h4>
+                <p class="text-muted">Try changing your filter or search criteria</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- University Details Modal -->
+<div class="modal fade" id="universityModal" tabindex="-1" aria-labelledby="universityModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="universityModalLabel">University Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .country-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    
+    .domain-badge {
+        padding: 0.25rem 0.5rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        background-color: #dcfce7;
+        color: #166534;
+        font-family: monospace;
+    }
+    
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+    
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+    
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #4e73df;
+        border-top: none;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .university-logo-cell {
+        display: flex;
+        align-items: center;
+    }
+    
+    .university-logo-placeholder {
+        width: 40px;
+        height: 40px;
+        background-color: #e9ecef;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 12px;
+        color: #6c757d;
+        font-size: 1.2rem;
+    }
+    
+    .website-link {
+        color: #0d6efd;
+        text-decoration: none;
+    }
+    
+    .website-link:hover {
+        text-decoration: underline;
+    }
+    
+    .students-count {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .action-buttons {
+        white-space: nowrap;
+    }
+    
+    .location-info {
+        font-size: 0.9rem;
+    }
+    
+    .location-info i {
+        width: 16px;
+        color: #6c757d;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const API_BASE = "http://127.0.0.1:8000";
+    const access = localStorage.getItem("access");
+    let allUniversities = [];
+    let allStudents = [];
+    let allStaff = [];
+
+    // Check authentication
+    if (!access) {
+        alert("Please login first");
+        window.location.href = "/api/auth/jwt-login/";
+        return;
+    }
+
+    // Initialize
+    loadUniversities();
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        loadUniversities();
+    });
+
+    // Search functionality
+    document.getElementById('searchBtn').addEventListener('click', filterUniversities);
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') filterUniversities();
+    });
+
+    // Load universities
+    async function loadUniversities() {
+        try {
+            showLoader();
+            
+            // Load universities
+            const universitiesRes = await fetch(`${API_BASE}/api/universities/`, {
+                headers: { 
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (!universitiesRes.ok) {
+                throw new Error(`HTTP error! status: ${universitiesRes.status}`);
+            }
+            
+            const universitiesData = await universitiesRes.json();
+            allUniversities = Array.isArray(universitiesData) ? universitiesData : [];
+            
+            // Load students and staff
+            const profilesRes = await fetch(`${API_BASE}/api/profiles/`, {
+                headers: { 
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (profilesRes.ok) {
+                const profilesData = await profilesRes.json();
+                allStudents = Array.isArray(profilesData) ? profilesData.filter(p => p.role === 'student') : [];
+                allStaff = Array.isArray(profilesData) ? profilesData.filter(p => p.role === 'university') : [];
+            }
+            
+            updateStats(allUniversities, allStudents, allStaff);
+            populateCountryFilter(allUniversities);
+            displayUniversities(allUniversities);
+            hideLoader();
+            
+        } catch (err) {
+            console.error("Error loading universities:", err);
+            alert("Failed to load universities. Please check your connection and try again.");
+            hideLoader();
+            showNoUniversities();
+        }
+    }
+
+    function updateStats(universities, students, staff) {
+        const total = universities.length;
+        
+        // Count students and staff per university
+        const studentCounts = {};
+        const staffCounts = {};
+        
+        students.forEach(student => {
+            if (student.university?.id) {
+                const univId = student.university.id;
+                studentCounts[univId] = (studentCounts[univId] || 0) + 1;
+            }
+        });
+        
+        staff.forEach(staffMember => {
+            if (staffMember.university?.id) {
+                const univId = staffMember.university.id;
+                staffCounts[univId] = (staffCounts[univId] || 0) + 1;
+            }
+        });
+        
+        const activeStudents = Object.keys(studentCounts).length;
+        const activeStaff = Object.keys(staffCounts).length;
+        
+        const today = new Date().toISOString().split('T')[0];
+        const todayCount = universities.filter(u => {
+            if (!u.created_at) return false;
+            return u.created_at.startsWith(today);
+        }).length;
+
+        document.getElementById('totalUniversities').textContent = total;
+        document.getElementById('activeStudents').textContent = students.length;
+        document.getElementById('activeStaff').textContent = staff.length;
+        document.getElementById('todayUniversities').textContent = todayCount;
+    }
+
+    function populateCountryFilter(universities) {
+        const filterMenu = document.getElementById('countryFilter');
+        filterMenu.innerHTML = '';
+        
+        // Get unique countries
+        const countries = [...new Set(universities.map(u => u.country).filter(Boolean))].sort();
+        
+        // Add "All Countries" option
+        const allItem = document.createElement('li');
+        allItem.innerHTML = `<a class="dropdown-item" href="#" data-country="all">All Countries</a>`;
+        filterMenu.appendChild(allItem);
+        
+        // Add separator
+        const divider = document.createElement('li');
+        divider.innerHTML = '<hr class="dropdown-divider">';
+        filterMenu.appendChild(divider);
+        
+        // Add each country
+        countries.forEach(country => {
+            const item = document.createElement('li');
+            item.innerHTML = `<a class="dropdown-item" href="#" data-country="${country}">${country}</a>`;
+            filterMenu.appendChild(item);
+        });
+        
+        // Add event listeners to filter items
+        document.querySelectorAll('#countryFilter .dropdown-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                const country = this.getAttribute('data-country');
+                document.getElementById('filterDropdown').innerHTML = 
+                    `<i class="bi bi-filter me-1"></i> ${country === 'all' ? 'All Countries' : country}`;
+                filterUniversities(country);
+            });
+        });
+    }
+
+    function displayUniversities(universities) {
+        const tbody = document.getElementById("universitiesBody");
+        tbody.innerHTML = "";
+
+        if (universities.length === 0) {
+            showNoUniversities();
+            return;
+        }
+
+        universities.forEach(university => {
+            // Count students and staff for this university
+            const studentsCount = allStudents.filter(s => 
+                s.university?.id === university.id
+            ).length;
+            
+            const staffCount = allStaff.filter(st => 
+                st.university?.id === university.id
+            ).length;
+            
+            // Create row
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td><span class="badge bg-light text-dark">#${university.id}</span></td>
+                <td>
+                    <div class="university-logo-cell">
+                        <div class="university-logo-placeholder">
+                            <i class="bi bi-mortarboard"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">${university.name || 'N/A'}</div>
+                            <small class="text-muted">ID: ${university.id}</small>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="location-info">
+                        ${university.city ? `<div><i class="bi bi-geo-alt me-1"></i> ${university.city}</div>` : ''}
+                        ${university.country ? 
+                            `<div class="mt-1">
+                                <span class="country-badge">${university.country}</span>
+                            </div>` : 
+                            ''}
+                    </div>
+                </td>
+                <td>
+                    <div>
+                        ${university.email ? `<div><i class="bi bi-envelope me-1"></i> ${university.email}</div>` : ''}
+                        ${university.phone ? `<div class="mt-1"><i class="bi bi-phone me-1"></i> ${university.phone}</div>` : ''}
+                        ${university.website ? 
+                            `<div class="mt-1">
+                                <a href="${university.website}" class="website-link" target="_blank">
+                                    <i class="bi bi-globe me-1"></i> Website
+                                </a>
+                            </div>` : 
+                            ''}
+                    </div>
+                </td>
+                <td>
+                    ${university.email_domain ? 
+                        `<span class="domain-badge">@${university.email_domain}</span>` : 
+                        '<span class="text-muted">Not set</span>'}
+                    ${university.email_domain ? 
+                        `<div class="mt-1"><small class="text-muted">Email domain</small></div>` : 
+                        ''}
+                </td>
+                <td>
+                    <div class="students-count">
+                        <div><i class="bi bi-people me-1"></i> ${studentsCount} student${studentsCount !== 1 ? 's' : ''}</div>
+                        <div class="mt-1"><i class="bi bi-person-badge me-1"></i> ${staffCount} staff member${staffCount !== 1 ? 's' : ''}</div>
+                    </div>
+                </td>
+                <td class="action-buttons">
+                    <button class="btn btn-sm btn-outline-primary me-1 view-btn" data-university-id="${university.id}">
+                        <i class="bi bi-eye"></i> View
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> Edit
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Add event listeners to view buttons
+        document.querySelectorAll('.view-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const universityId = this.getAttribute('data-university-id');
+                const university = allUniversities.find(u => u.id == universityId);
+                if (university) showUniversityDetails(university);
+            });
+        });
+
+        document.getElementById('tableContainer').style.display = 'block';
+        document.getElementById('noUniversities').style.display = 'none';
+    }
+
+    function filterUniversities(countryFilter = null) {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        let filteredUniversities = allUniversities;
+
+        // Apply search filter
+        if (searchTerm) {
+            filteredUniversities = filteredUniversities.filter(university => {
+                const name = university.name?.toLowerCase() || '';
+                const city = university.city?.toLowerCase() || '';
+                const country = university.country?.toLowerCase() || '';
+                const domain = university.email_domain?.toLowerCase() || '';
+                
+                return name.includes(searchTerm) || 
+                       city.includes(searchTerm) || 
+                       country.includes(searchTerm) ||
+                       domain.includes(searchTerm);
+            });
+        }
+
+        // Apply country filter
+        if (countryFilter && countryFilter !== 'all') {
+            filteredUniversities = filteredUniversities.filter(university => 
+                university.country === countryFilter
+            );
+        }
+
+        displayUniversities(filteredUniversities);
+        
+        if (filteredUniversities.length === 0) {
+            showNoUniversities();
+        }
+    }
+
+    // Show university details in modal
+    function showUniversityDetails(university) {
+        // Get students and staff for this university
+        const students = allStudents.filter(s => s.university?.id === university.id);
+        const staff = allStaff.filter(st => st.university?.id === university.id);
+        
+        // Get top students by GPA
+        const topStudents = students
+            .filter(s => s.gpa)
+            .sort((a, b) => parseFloat(b.gpa) - parseFloat(a.gpa))
+            .slice(0, 5);
+        
+        // Build modal content
+        const modalContent = `
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">University Name</label>
+                        <div class="fw-bold">${university.name || 'N/A'}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Location</label>
+                        <div>
+                            ${university.city ? `<div class="fw-bold">${university.city}, ${university.country || ''}</div>` : ''}
+                            ${university.address ? `<small class="text-muted">${university.address}</small>` : ''}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Description</label>
+                        <div class="fw-bold">${university.description || 'No description available'}</div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Contact Information</label>
+                        <div>
+                            ${university.email ? `<div><i class="bi bi-envelope me-1"></i> ${university.email}</div>` : ''}
+                            ${university.phone ? `<div class="mt-2"><i class="bi bi-phone me-1"></i> ${university.phone}</div>` : ''}
+                            ${university.website ? 
+                                `<div class="mt-2">
+                                    <a href="${university.website}" class="website-link" target="_blank">
+                                        <i class="bi bi-globe me-1"></i> ${university.website}
+                                    </a>
+                                </div>` : 
+                                ''}
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Email Domain</label>
+                        <div>
+                            <span class="domain-badge">@${university.email_domain || 'Not set'}</span>
+                            ${university.email_domain ? 
+                                `<small class="text-muted d-block mt-1">Students and staff use this domain for registration</small>` : 
+                                ''}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Community Statistics</label>
+                        <div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>Total Students:</span>
+                                <span class="fw-bold">${students.length}</span>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <span>University Staff:</span>
+                                <span class="fw-bold">${staff.length}</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Verified Users:</span>
+                                <span class="fw-bold">${students.filter(s => s.is_verified).length + staff.filter(st => st.is_verified).length}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Average GPA</label>
+                        <div class="fw-bold">
+                            ${students.length > 0 && students.some(s => s.gpa) ?
+                                (students.reduce((sum, s) => sum + (parseFloat(s.gpa) || 0), 0) / students.filter(s => s.gpa).length).toFixed(2) :
+                                'N/A'}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Registration Date</label>
+                        <div class="fw-bold">${university.created_at ? new Date(university.created_at).toLocaleDateString() : 'N/A'}</div>
+                    </div>
+                </div>
+            </div>
+            
+            ${topStudents.length > 0 ? `
+                <div class="mt-4">
+                    <h6 class="mb-3">Top Students by GPA</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>GPA</th>
+                                    <th>Field of Study</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${topStudents.map(student => `
+                                    <tr>
+                                        <td>${student.user?.first_name || ''} ${student.user?.last_name || ''}</td>
+                                        <td>${student.user?.email || 'N/A'}</td>
+                                        <td>
+                                            <span class="badge ${parseFloat(student.gpa) >= 3.0 ? 'bg-success' : 'bg-warning'}">
+                                                ${parseFloat(student.gpa).toFixed(2)}
+                                            </span>
+                                        </td>
+                                        <td>${student.field_of_study || 'N/A'}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${staff.length > 0 ? `
+                <div class="mt-4">
+                    <h6 class="mb-3">University Staff</h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${staff.map(staffMember => `
+                                    <tr>
+                                        <td>${staffMember.user?.first_name || ''} ${staffMember.user?.last_name || ''}</td>
+                                        <td>${staffMember.user?.email || 'N/A'}</td>
+                                        <td>
+                                            <span class="badge ${staffMember.is_verified ? 'bg-success' : 'bg-warning'}">
+                                                ${staffMember.is_verified ? 'Verified' : 'Pending'}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        // Update modal content
+        document.getElementById('modalBody').innerHTML = modalContent;
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('universityModal'));
+        modal.show();
+    }
+
+    function showLoader() {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('tableContainer').style.display = 'none';
+        document.getElementById('noUniversities').style.display = 'none';
+    }
+
+    function hideLoader() {
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    function showNoUniversities() {
+        document.getElementById('tableContainer').style.display = 'none';
+        document.getElementById('noUniversities').style.display = 'block';
+        document.getElementById('loader').style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

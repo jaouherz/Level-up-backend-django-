@@ -9,8 +9,8 @@
       </div>
     </div>
     <div class="text-center mt-2">
-      <h2 class="mb-0" id="panelTitle">Recruitment Panel</h2>
-      <small class="text-muted" id="panelSubtitle">Professional Suite</small>
+      <h2 class="mb-0" id="panelTitle">Admin Panel</h2>
+      <small class="text-muted" id="panelSubtitle">Management Suite</small>
     </div>
   </div>
 
@@ -19,70 +19,79 @@
     <ul class="nav flex-column">
       <!-- Dashboard -->
       <li class="nav-item">
-        <a class="nav-link" href="{% url 'recruiting:dashboard' %}">
+        <a class="nav-link" href="{% url 'admin:dashboard' %}">
           <i class="bi bi-speedometer2"></i>
           <span>Dashboard</span>
         </a>
       </li>
 
-      <!-- Recruitment Section (Only for recruiters) -->
-      <div id="recruitmentSection" style="display: none;">
-        <li class="nav-section">
-          <small class="text-uppercase text-muted">Recruitment</small>
-        </li>
-        
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'recruiting:offer_list' %}">
-            <i class="bi bi-briefcase"></i>
-            <span>My Offers</span>
-            <span class="badge badge-zero" id="offersCountBadge">0</span>
-          </a>
-        </li>
-        
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'recruiting:offer_create' %}">
-            <i class="bi bi-plus-circle"></i>
-            <span>Create Offer</span>
-          </a>
-        </li>
-      </div>
-
-      <div id="universitySection" style="display: none;">
-        <li class="nav-section">
-          <small class="text-uppercase text-muted">University</small>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'recruiting:uni_students' %}">
-            <i class="bi bi-people"></i>
-            <span>Students</span>
-          </a>
-        </li>
-
-        <li class="nav-item">
-          <a class="nav-link" href="{% url 'recruiting:uni_demands' %}">
-            <i class="bi bi-clipboard-data"></i>
-            <span>Demands</span>
-          </a>
-        </li>
-      </div>
-
-      <!-- Tools Section -->
+      <!-- Management Sections -->
       <li class="nav-section">
-        <small class="text-uppercase text-muted">Tools</small>
+        <small class="text-uppercase text-muted">Management</small>
       </li>
-
+      
+      <!-- Users -->
       <li class="nav-item">
-        <a class="nav-link" href="#">
-          <i class="bi bi-chat-left-text"></i>
-          <span>Feedback</span>
+        <a class="nav-link" href="{% url 'admin:users' %}">
+          <i class="bi bi-people"></i>
+          <span>Users</span>
+          <span class="badge" id="usersCountBadge">0</span>
+        </a>
+      </li>
+      
+      <!-- Offers -->
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'admin:offers' %}">
+          <i class="bi bi-briefcase"></i>
+          <span>Offers</span>
+          <span class="badge" id="offersCountBadge">0</span>
+        </a>
+      </li>
+      
+      <!-- Companies -->
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'admin:companies' %}">
+          <i class="bi bi-building"></i>
+          <span>Companies</span>
+          <span class="badge" id="companiesCountBadge">0</span>
+        </a>
+      </li>
+      
+      <!-- Universities -->
+      <li class="nav-item">
+        <a class="nav-link" href="{% url 'admin:universities' %}">
+          <i class="bi bi-mortarboard"></i>
+          <span>Universities</span>
+          <span class="badge" id="universitiesCountBadge">0</span>
         </a>
       </li>
 
+      <!-- System Section -->
+      <li class="nav-section">
+        <small class="text-uppercase text-muted">System</small>
+      </li>
+
+      <!-- Settings -->
       <li class="nav-item">
         <a class="nav-link" href="#">
           <i class="bi bi-gear"></i>
           <span>Settings</span>
+        </a>
+      </li>
+
+      <!-- Logs -->
+      <li class="nav-item">
+        <a class="nav-link" href="#">
+          <i class="bi bi-journal-text"></i>
+          <span>Activity Logs</span>
+        </a>
+      </li>
+
+      <!-- Reports -->
+      <li class="nav-item">
+        <a class="nav-link" href="#">
+          <i class="bi bi-graph-up"></i>
+          <span>Reports</span>
         </a>
       </li>
     </ul>
@@ -93,11 +102,11 @@
     <div class="user-info">
       <div class="d-flex align-items-center mb-2">
         <div class="user-avatar me-3">
-          <i class="bi bi-person-circle"></i>
+          <i class="bi bi-person-badge"></i>
         </div>
         <div class="flex-grow-1">
-          <div class="user-name" id="userFirstname">Welcome Back</div>
-          <div class="user-role text-muted" id="userRoleDisplay">Recruiter</div>
+          <div class="user-name" id="userFirstname">Admin</div>
+          <div class="user-role text-muted" id="userRoleDisplay">Administrator</div>
         </div>
       </div>
     </div>
@@ -109,7 +118,7 @@
 </div>
 
 <style>
-  /* Sidebar Base Styles */
+  /* Sidebar Base Styles - Same as before */
   #sidebar {
     width: 260px;
     height: 100vh;
@@ -198,14 +207,14 @@
 
   .nav-link:hover {
     background: #f8f9fa;
-    color: #4e73df;
+    color: #dc3545; /* Admin red accent */
     transform: translateX(4px);
   }
 
   .nav-link.active {
-    background: #4e73df;
+    background: #dc3545; /* Admin red accent */
     color: white;
-    box-shadow: 0 2px 8px rgba(78, 115, 223, 0.3);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
   }
 
   .nav-link i {
@@ -220,26 +229,24 @@
     font-size: 0.9rem;
   }
 
+  /* Badges */
   .badge {
-    background: #e74a3b;
+    background: #dc3545; /* Admin red */
     color: white;
     font-size: 0.7rem;
     padding: 0.25rem 0.5rem;
     border-radius: 12px;
     font-weight: 600;
+    min-width: 24px;
+    text-align: center;
   }
+  
   .badge-zero {
     background-color: #6c757d;   /* Gray */
-    color: white;
   }
 
   .badge-positive {
-    background-color: #28a745;   /* Green */
-    color: white;
-  }
-
-  .badge.bg-success {
-    background: #1cc88a;
+    background-color: #dc3545;   /* Admin red */
   }
 
   /* Footer */
@@ -252,12 +259,12 @@
   .user-avatar {
     width: 36px;
     height: 36px;
-    background: #e9ecef;
+    background: #dc3545; /* Admin red */
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: #6c757d;
+    color: white;
     font-size: 1.3rem;
   }
 
@@ -269,6 +276,7 @@
 
   .user-role {
     font-size: 0.8rem;
+    color: #dc3545; /* Admin red */
   }
 
   .btn-logout {
@@ -278,8 +286,8 @@
     gap: 8px;
     padding: 0.75rem;
     background: transparent;
-    border: 1px solid #e74a3b;
-    color: #e74a3b;
+    border: 1px solid #dc3545; /* Admin red */
+    color: #dc3545;
     border-radius: 8px;
     font-weight: 500;
     font-size: 0.9rem;
@@ -287,10 +295,10 @@
   }
 
   .btn-logout:hover {
-    background: #e74a3b;
+    background: #dc3545;
     color: white;
     transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(231, 74, 59, 0.3);
+    box-shadow: 0 2px 8px rgba(220, 53, 69, 0.3);
   }
 
   /* Scrollbar */
@@ -339,59 +347,31 @@
       font-size: 1rem;
     }
   }
-
-  /* Fallback logo style */
-  .fallback-logo {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: linear-gradient(135deg, #4e73df, #224abe);
-    border-radius: 8px;
-    color: white;
-  }
 </style>
 
 <script>
 document.addEventListener("DOMContentLoaded", async function() {
     try {
         const access = localStorage.getItem("access");
-        const firstname = localStorage.getItem("firstname");
-        const role = localStorage.getItem("role");
+        const firstname = localStorage.getItem("firstname") || "Admin";
+        const role = "admin";
         
-        setRoleBasedDisplay(role);
-        
-        if (role === 'recruiter') {
-            const res = await fetch("/api/offers/my_company/", {
-                headers: { "Authorization": "Bearer " + access }
-            });
-
-            const offers = await res.json();
-            const count = offers.length || 0;
-            const badge = document.getElementById("offersCountBadge");
-            
-            if (badge) {
-                badge.textContent = count;
-                badge.classList.remove("badge-zero", "badge-positive");
-                if (count > 0) {
-                    badge.classList.add("badge-positive");
-                } else {
-                    badge.classList.add("badge-zero");
-                }
-            }
-        }
-
-        // Update user info
         const firstnameEl = document.getElementById("userFirstname");
         if (firstnameEl) {
-            firstnameEl.innerHTML = 'Welcome back <i style="color: #4e73df"><b>' + firstname + '</b></i>';
+            firstnameEl.innerHTML = 'Welcome back <i style="color: #dc3545"><b>' + firstname + '</b></i>';
+        }
+        
+        setAdminDisplay();
+        
+        if (access) {
+            await fetchAdminCounts(access);
         }
 
     } catch (err) {
-        console.error("Error loading data:", err);
+        console.error("Error loading admin data:", err);
     }
 
+    // Logout button
     document.getElementById('logoutBtn').addEventListener('click', function() {
         if (confirm('Are you sure you want to sign out?')) {
             localStorage.clear();
@@ -403,10 +383,18 @@ document.addEventListener("DOMContentLoaded", async function() {
     const navLinks = document.querySelectorAll('.nav-link');
     
     navLinks.forEach(link => {
-        if (link.getAttribute('href') === currentPath) {
-            link.classList.add('active');
-        }
-    });
+      const linkPath = link.getAttribute('href');
+      if (linkPath) {
+          link.classList.remove('active');
+
+          if (linkPath === '/admin/' && currentPath === '/admin/') {
+              link.classList.add('active');
+          }
+          else if (linkPath !== '/admin/' && currentPath.startsWith(linkPath)) {
+              link.classList.add('active');
+          }
+      }
+  });
 
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
@@ -426,36 +414,66 @@ document.addEventListener("DOMContentLoaded", async function() {
     }
 });
 
-function setRoleBasedDisplay(role) {
+function setAdminDisplay() {
     const panelTitle = document.getElementById('panelTitle');
     const panelSubtitle = document.getElementById('panelSubtitle');
     const userRoleDisplay = document.getElementById('userRoleDisplay');
-    const recruitmentSection = document.getElementById('recruitmentSection');
-    const universitySection = document.getElementById('universitySection');
 
-    if (role === 'recruiter') {
-        // Show recruitment panel
-        if (panelTitle) panelTitle.textContent = 'Recruitment Panel';
-        if (panelSubtitle) panelSubtitle.textContent = 'Professional Suite';
-        if (userRoleDisplay) userRoleDisplay.textContent = 'Recruiter';
-        if (recruitmentSection) recruitmentSection.style.display = 'block';
-        if (universitySection) universitySection.style.display = 'none';
-    } 
-    else if (role === 'university') {
-        // Show university panel
-        if (panelTitle) panelTitle.textContent = 'University Panel';
-        if (panelSubtitle) panelSubtitle.textContent = 'Academic Management';
-        if (userRoleDisplay) userRoleDisplay.textContent = 'University Staff';
-        if (recruitmentSection) recruitmentSection.style.display = 'none';
-        if (universitySection) universitySection.style.display = 'block';
-    }
-    else {
-        // Default fallback
-        if (panelTitle) panelTitle.textContent = 'Dashboard Panel';
-        if (panelSubtitle) panelSubtitle.textContent = 'Management Suite';
-        if (userRoleDisplay) userRoleDisplay.textContent = 'User';
-        if (recruitmentSection) recruitmentSection.style.display = 'none';
-        if (universitySection) universitySection.style.display = 'none';
+    if (panelTitle) panelTitle.textContent = 'Admin Panel';
+    if (panelSubtitle) panelSubtitle.textContent = 'Management Suite';
+    if (userRoleDisplay) userRoleDisplay.textContent = 'Administrator';
+}
+
+async function fetchAdminCounts(accessToken) {
+    try {
+        // Fetch counts from your API endpoints
+        const endpoints = [
+            { url: '/api/profiles/', badgeId: 'usersCountBadge' },
+            { url: '/api/offers/', badgeId: 'offersCountBadge' },
+            { url: '/api/companies/', badgeId: 'companiesCountBadge' },
+            { url: '/api/universities/', badgeId: 'universitiesCountBadge' }
+        ];
+
+        for (const endpoint of endpoints) {
+            try {
+                const response = await fetch(endpoint.url, {
+                    headers: { 
+                        "Authorization": "Bearer " + accessToken,
+                        "Content-Type": "application/json"
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    const badge = document.getElementById(endpoint.badgeId);
+                    
+                    if (badge) {
+                        // Check if data is an array or has a count property
+                        const count = Array.isArray(data) ? data.length : 
+                                     (data.count || data.results?.length || 0);
+                        
+                        badge.textContent = count;
+                        badge.classList.remove("badge-zero", "badge-positive");
+                        
+                        if (count > 0) {
+                            badge.classList.add("badge-positive");
+                        } else {
+                            badge.classList.add("badge-zero");
+                        }
+                    }
+                }
+            } catch (error) {
+                console.warn(`Failed to fetch ${endpoint.badgeId}:`, error);
+                // Set default badge
+                const badge = document.getElementById(endpoint.badgeId);
+                if (badge) {
+                    badge.textContent = '0';
+                    badge.classList.add("badge-zero");
+                }
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching admin counts:", error);
     }
 }
 </script>

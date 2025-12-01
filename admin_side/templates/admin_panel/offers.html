@@ -1,0 +1,839 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Offers Management - Admin{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Offers Management</h1>
+            <p class="text-muted">View and manage all job and internship offers in the system.</p>
+        </div>
+        <div class="d-flex">
+            <div class="input-group me-3" style="max-width: 300px;">
+                <input type="text" class="form-control" placeholder="Search offers..." id="searchInput">
+                <button class="btn btn-outline-secondary" type="button" id="searchBtn">
+                    <i class="bi bi-search"></i>
+                </button>
+            </div>
+            <button class="btn btn-outline-warning" id="refreshBtn">
+                <i class="bi bi-arrow-clockwise"></i> Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Total Offers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalOffers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-briefcase fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Active Offers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="activeOffers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Closed Offers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="closedOffers">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-x-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Applications
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="totalApplications">0</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-person-plus fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offers Table -->
+    <div class="card shadow">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+            <h6 class="m-0 font-weight-bold text-primary">All Offers</h6>
+            <div class="dropdown">
+                <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="filterDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="bi bi-filter me-1"></i> Status
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="filterDropdown">
+                    <li><a class="dropdown-item" href="#" data-filter="all">All Offers</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="active">Active</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="closed">Closed</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" data-filter="internship">Internships</a></li>
+                    <li><a class="dropdown-item" href="#" data-filter="job">Full-time Jobs</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="card-body">
+            <div id="loader" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading offers...</p>
+            </div>
+            
+            <div class="table-responsive" id="tableContainer" style="display: none;">
+                <table class="table table-hover" id="offersTable">
+                    <thead class="thead-light">
+                        <tr>
+                            <th>ID</th>
+                            <th>Title</th>
+                            <th>Company</th>
+                            <th>Type</th>
+                            <th>Location</th>
+                            <th>Deadline</th>
+                            <th>Status</th>
+                            <th>Applications</th>
+                        </tr>
+                    </thead>
+                    <tbody id="offersBody">
+                        <!-- Offers will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div id="noOffers" class="text-center py-5" style="display: none;">
+                <i class="bi bi-briefcase display-1 text-muted mb-3"></i>
+                <h4 class="text-muted">No offers found</h4>
+                <p class="text-muted">Try changing your filter or search criteria</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Offer Details Modal -->
+<div class="modal fade" id="offerModal" tabindex="-1" aria-labelledby="offerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="offerModalLabel">Offer Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Details will be loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="toggleStatusBtn">
+                    <i class="bi bi-toggle-off me-1"></i> Toggle Status
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .offer-type-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .type-internship {
+        background-color: #e0f2fe;
+        color: #0369a1;
+    }
+    
+    .type-job {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .status-active {
+        background-color: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-closed {
+        background-color: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+    
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    
+    .border-left-danger {
+        border-left: 4px solid #dc3545 !important;
+    }
+    
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #4e73df;
+        border-top: none;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .offer-row {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .offer-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .skill-badge {
+        background-color: #4e73df;
+        color: white;
+        padding: 0.25rem 0.75rem;
+        margin: 0.125rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        display: inline-block;
+    }
+    
+    .company-info {
+        display: flex;
+        align-items: center;
+    }
+    
+    .company-logo-placeholder {
+        width: 32px;
+        height: 32px;
+        background-color: #e9ecef;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        color: #6c757d;
+    }
+    
+    .applications-count {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .deadline-warning {
+        color: #dc3545;
+        font-weight: 600;
+    }
+    
+    .salary-badge {
+        background-color: #fef3c7;
+        color: #92400e;
+        padding: 0.25rem 0.75rem;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const API_BASE = "http://127.0.0.1:8000";
+    const access = localStorage.getItem("access");
+    let allOffers = [];
+    let allApplications = [];
+    let currentOfferId = null;
+
+    // Check authentication
+    if (!access) {
+        alert("Please login first");
+        window.location.href = "/api/auth/jwt-login/";
+        return;
+    }
+
+    // Initialize
+    loadOffers();
+
+    // Refresh button
+    document.getElementById('refreshBtn').addEventListener('click', function() {
+        loadOffers();
+    });
+
+    // Search functionality
+    document.getElementById('searchBtn').addEventListener('click', filterOffers);
+    document.getElementById('searchInput').addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') filterOffers();
+    });
+
+    // Filter dropdown
+    document.querySelectorAll('[data-filter]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const filter = this.getAttribute('data-filter');
+            document.getElementById('filterDropdown').innerHTML = 
+                `<i class="bi bi-filter me-1"></i> ${this.textContent}`;
+            filterOffers(filter);
+        });
+    });
+
+    // Toggle status button in modal
+    document.getElementById('toggleStatusBtn').addEventListener('click', function() {
+        if (currentOfferId) {
+            toggleOfferStatus(currentOfferId);
+        }
+    });
+
+    // Load offers
+    async function loadOffers() {
+        try {
+            showLoader();
+            
+            // Load offers
+            const offersRes = await fetch(`${API_BASE}/api/offers/`, {
+                headers: { 
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (!offersRes.ok) {
+                throw new Error(`HTTP error! status: ${offersRes.status}`);
+            }
+            
+            const offersData = await offersRes.json();
+            allOffers = Array.isArray(offersData) ? offersData : [];
+            
+            // Load applications
+            const appsRes = await fetch(`${API_BASE}/api/applications/`, {
+                headers: { 
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                }
+            });
+            
+            if (appsRes.ok) {
+                const appsData = await appsRes.json();
+                allApplications = Array.isArray(appsData) ? appsData : [];
+            }
+            
+            updateStats(allOffers, allApplications);
+            displayOffers(allOffers);
+            hideLoader();
+            
+        } catch (err) {
+            console.error("Error loading offers:", err);
+            alert("Failed to load offers. Please check your connection and try again.");
+            hideLoader();
+            showNoOffers();
+        }
+    }
+
+    function updateStats(offers, applications) {
+        const total = offers.length;
+        const active = offers.filter(o => !o.is_closed).length;
+        const closed = offers.filter(o => o.is_closed).length;
+        const totalApps = applications.length;
+
+        document.getElementById('totalOffers').textContent = total;
+        document.getElementById('activeOffers').textContent = active;
+        document.getElementById('closedOffers').textContent = closed;
+        document.getElementById('totalApplications').textContent = totalApps;
+    }
+
+    function displayOffers(offers) {
+        const tbody = document.getElementById("offersBody");
+        tbody.innerHTML = "";
+
+        if (offers.length === 0) {
+            showNoOffers();
+            return;
+        }
+
+        offers.forEach(offer => {
+            // Count applications for this offer
+            const applicationsCount = allApplications.filter(app => 
+                app.offer?.id === offer.id
+            ).length;
+            
+            // Determine if deadline is approaching (within 3 days)
+            const today = new Date();
+            const deadline = new Date(offer.deadline);
+            const daysUntilDeadline = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+            const isDeadlineApproaching = daysUntilDeadline <= 3 && daysUntilDeadline >= 0;
+            const isExpired = daysUntilDeadline < 0;
+            
+            // Type badge
+            const isInternship = offer.title?.toLowerCase().includes('intern') || 
+                               offer.level_required?.toLowerCase().includes('intern');
+            const typeClass = isInternship ? 'type-internship' : 'type-job';
+            const typeText = isInternship ? 'Internship' : 'Job';
+            
+            // Status badge
+            const statusClass = offer.is_closed || isExpired ? 'status-closed' : 'status-active';
+            const statusText = offer.is_closed ? 'Closed' : (isExpired ? 'Expired' : 'Active');
+
+            // Create row
+            const row = document.createElement("tr");
+            row.className = 'offer-row';
+            row.setAttribute('data-offer-id', offer.id);
+            row.innerHTML = `
+                <td><span class="badge bg-light text-dark">#${offer.id}</span></td>
+                <td>
+                    <div class="fw-bold">${offer.title || 'N/A'}</div>
+                    <small class="text-muted">${offer.field_required || 'No field specified'}</small>
+                </td>
+                <td>
+                    <div class="company-info">
+                        <div class="company-logo-placeholder">
+                            <i class="bi bi-building"></i>
+                        </div>
+                        <div>
+                            <div class="fw-bold">${offer.company?.name || 'N/A'}</div>
+                            <small class="text-muted">${offer.company?.industry || 'N/A'}</small>
+                        </div>
+                    </div>
+                </td>
+                <td><span class="offer-type-badge ${typeClass}">${typeText}</span></td>
+                <td>
+                    <div>
+                        <div class="fw-bold">${offer.location || 'Remote'}</div>
+                        ${offer.is_remote ? '<small class="text-success">Remote available</small>' : ''}
+                    </div>
+                </td>
+                <td>
+                    <div class="${isDeadlineApproaching ? 'deadline-warning' : ''}">
+                        ${new Date(offer.deadline).toLocaleDateString()}
+                    </div>
+                    ${isDeadlineApproaching ? 
+                        `<small class="text-danger">${daysUntilDeadline} day${daysUntilDeadline !== 1 ? 's' : ''} left</small>` : 
+                        ''}
+                </td>
+                <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                <td>
+                    <div class="applications-count">
+                        <i class="bi bi-people me-1"></i> ${applicationsCount}
+                    </div>
+                    ${applicationsCount > 0 ? 
+                        `<small class="text-muted">applications</small>` : 
+                        `<small class="text-warning">No applications yet</small>`}
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+
+        // Add click event listeners to rows
+        document.querySelectorAll('.offer-row').forEach(row => {
+            row.addEventListener('click', function() {
+                const offerId = this.getAttribute('data-offer-id');
+                const offer = allOffers.find(o => o.id == offerId);
+                if (offer) showOfferDetails(offer);
+            });
+        });
+
+        document.getElementById('tableContainer').style.display = 'block';
+        document.getElementById('noOffers').style.display = 'none';
+    }
+
+    function filterOffers(filterType = null) {
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        let filteredOffers = allOffers;
+
+        // Apply search filter
+        if (searchTerm) {
+            filteredOffers = filteredOffers.filter(offer => {
+                const title = offer.title?.toLowerCase() || '';
+                const company = offer.company?.name?.toLowerCase() || '';
+                const field = offer.field_required?.toLowerCase() || '';
+                const location = offer.location?.toLowerCase() || '';
+                
+                return title.includes(searchTerm) || 
+                       company.includes(searchTerm) || 
+                       field.includes(searchTerm) ||
+                       location.includes(searchTerm);
+            });
+        }
+
+        // Apply type filter
+        if (filterType && filterType !== 'all') {
+            if (filterType === 'active') {
+                filteredOffers = filteredOffers.filter(o => !o.is_closed);
+            } else if (filterType === 'closed') {
+                filteredOffers = filteredOffers.filter(o => o.is_closed);
+            } else if (filterType === 'internship') {
+                filteredOffers = filteredOffers.filter(o => 
+                    o.title?.toLowerCase().includes('intern') || 
+                    o.level_required?.toLowerCase().includes('intern')
+                );
+            } else if (filterType === 'job') {
+                filteredOffers = filteredOffers.filter(o => 
+                    !o.title?.toLowerCase().includes('intern') && 
+                    !o.level_required?.toLowerCase().includes('intern')
+                );
+            }
+        }
+
+        displayOffers(filteredOffers);
+        
+        if (filteredOffers.length === 0) {
+            showNoOffers();
+        }
+    }
+
+    // Show offer details in modal
+    function showOfferDetails(offer) {
+        currentOfferId = offer.id;
+        
+        // Get applications for this offer
+        const applications = allApplications.filter(app => app.offer?.id === offer.id);
+        
+        // Determine deadline status
+        const today = new Date();
+        const deadline = new Date(offer.deadline);
+        const daysUntilDeadline = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+        const isExpired = daysUntilDeadline < 0;
+        
+        // Build modal content
+        const modalContent = `
+            <div class="row">
+                <div class="col-md-8">
+                    <div class="mb-3">
+                        <label class="form-label text-muted">Offer Title</label>
+                        <h4 class="fw-bold">${offer.title || 'N/A'}</h4>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Company</label>
+                            <div class="fw-bold">${offer.company?.name || 'N/A'}</div>
+                            ${offer.company?.industry ? 
+                                `<small class="text-muted">${offer.company.industry}</small>` : 
+                                ''}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Offer Type</label>
+                            <div>
+                                <span class="offer-type-badge ${offer.title?.toLowerCase().includes('intern') ? 'type-internship' : 'type-job'}">
+                                    ${offer.title?.toLowerCase().includes('intern') ? 'Internship' : 'Full-time Job'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Field Required</label>
+                            <div class="fw-bold">${offer.field_required || 'Not specified'}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Level Required</label>
+                            <div class="fw-bold">${offer.level_required || 'Not specified'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Location</label>
+                            <div class="fw-bold">${offer.location || 'Remote'}</div>
+                            ${offer.is_remote ? 
+                                `<span class="badge bg-success">Remote Available</span>` : 
+                                ''}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted">Salary</label>
+                            <div class="fw-bold">
+                                ${offer.salary ? 
+                                    `<span class="salary-badge">${offer.salary}</span>` : 
+                                    'Not specified'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            <h6 class="card-title">Quick Stats</h6>
+                            <div class="mb-2">
+                                <label class="form-label text-muted">Status</label>
+                                <div>
+                                    <span class="status-badge ${offer.is_closed || isExpired ? 'status-closed' : 'status-active'}">
+                                        ${offer.is_closed ? 'Closed' : (isExpired ? 'Expired' : 'Active')}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label text-muted">Applications</label>
+                                <div class="fw-bold">${applications.length}</div>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label text-muted">Deadline</label>
+                                <div class="fw-bold ${isExpired ? 'text-danger' : ''}">
+                                    ${new Date(offer.deadline).toLocaleDateString()}
+                                </div>
+                                ${!isExpired ? 
+                                    `<small class="text-muted">${daysUntilDeadline} day${daysUntilDeadline !== 1 ? 's' : ''} remaining</small>` :
+                                    `<small class="text-danger">Expired</small>`}
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label text-muted">Created</label>
+                                <div class="fw-bold">${offer.created_at ? new Date(offer.created_at).toLocaleDateString() : 'N/A'}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <label class="form-label text-muted">Description</label>
+                    <div class="card bg-light">
+                        <div class="card-body">
+                            ${offer.description || 'No description available'}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            ${offer.required_skills?.length > 0 ? `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <label class="form-label text-muted">Required Skills</label>
+                        <div class="d-flex flex-wrap gap-1">
+                            ${offer.required_skills.map(skill => 
+                                `<span class="skill-badge">${skill.name || skill}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                </div>
+            ` : ''}
+            
+            ${applications.length > 0 ? `
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6 class="mb-3">Recent Applications</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Student</th>
+                                        <th>University</th>
+                                        <th>GPA</th>
+                                        <th>Applied Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${applications.slice(0, 5).map(app => `
+                                        <tr>
+                                            <td>${app.student?.user?.first_name || ''} ${app.student?.user?.last_name || ''}</td>
+                                            <td>${app.student?.university?.name || 'N/A'}</td>
+                                            <td>${app.student?.gpa ? parseFloat(app.student.gpa).toFixed(2) : 'N/A'}</td>
+                                            <td>${app.applied_at ? new Date(app.applied_at).toLocaleDateString() : 'N/A'}</td>
+                                            <td>
+                                                <span class="badge ${app.status === 'accepted' ? 'bg-success' : 
+                                                                    app.status === 'rejected' ? 'bg-danger' : 
+                                                                    app.status === 'pending' ? 'bg-warning' : 'bg-secondary'}">
+                                                    ${app.status || 'Pending'}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                        ${applications.length > 5 ? 
+                            `<small class="text-muted">Showing 5 of ${applications.length} applications</small>` : 
+                            ''}
+                    </div>
+                </div>
+            ` : ''}
+        `;
+        
+        // Update modal content
+        document.getElementById('modalBody').innerHTML = modalContent;
+        
+        // Update modal title
+        document.getElementById('offerModalLabel').textContent = offer.title || 'Offer Details';
+        
+        // Update toggle button text
+        const toggleBtn = document.getElementById('toggleStatusBtn');
+        if (offer.is_closed || isExpired) {
+            toggleBtn.innerHTML = '<i class="bi bi-toggle-off me-1"></i> Reopen Offer';
+            toggleBtn.className = 'btn btn-success';
+        } else {
+            toggleBtn.innerHTML = '<i class="bi bi-toggle-on me-1"></i> Close Offer';
+            toggleBtn.className = 'btn btn-danger';
+        }
+        
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('offerModal'));
+        modal.show();
+    }
+
+    // Toggle offer status
+    async function toggleOfferStatus(offerId) {
+        const offer = allOffers.find(o => o.id == offerId);
+        if (!offer) return;
+        
+        const newStatus = !offer.is_closed;
+        const action = newStatus ? 'close' : 'reopen';
+        
+        if (!confirm(`Are you sure you want to ${action} this offer?`)) {
+            return;
+        }
+        
+        try {
+            // Note: You need to implement this endpoint in your backend
+            const response = await fetch(`${API_BASE}/api/offers/${offerId}/toggle-status/`, {
+                method: "POST",
+                headers: {
+                    "Authorization": `Bearer ${access}`,
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ is_closed: newStatus })
+            });
+            
+            if (response.ok) {
+                // Update local data
+                offer.is_closed = newStatus;
+                
+                // Update the table
+                displayOffers(allOffers);
+                updateStats(allOffers, allApplications);
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('offerModal'));
+                if (modal) {
+                    modal.hide();
+                }
+                
+                // Show success message
+                showToast(`Offer ${action}d successfully!`, 'success');
+                
+            } else {
+                const errorData = await response.json();
+                showToast(`Failed to ${action} offer: ${errorData.detail || 'Unknown error'}`, 'danger');
+            }
+        } catch (error) {
+            console.error("Error toggling offer status:", error);
+            showToast("Network error. Please try again.", 'danger');
+        }
+    }
+
+    function showLoader() {
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('tableContainer').style.display = 'none';
+        document.getElementById('noOffers').style.display = 'none';
+    }
+
+    function hideLoader() {
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    function showNoOffers() {
+        document.getElementById('tableContainer').style.display = 'none';
+        document.getElementById('noOffers').style.display = 'block';
+        document.getElementById('loader').style.display = 'none';
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Remove existing toast if any
+        const existingToast = document.querySelector('.toast-container');
+        if (existingToast) {
+            existingToast.remove();
+        }
+        
+        // Create toast container
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+        
+        // Create toast
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-bg-${type} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        `;
+        
+        toastContainer.appendChild(toast);
+        document.body.appendChild(toastContainer);
+        
+        // Show toast
+        const bsToast = new bootstrap.Toast(toast, {
+            autohide: true,
+            delay: 3000
+        });
+        bsToast.show();
+        
+        // Remove toast after it hides
+        toast.addEventListener('hidden.bs.toast', function() {
+            toastContainer.remove();
+        });
+    }
+});
+</script>
+{% endblock %}

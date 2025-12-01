@@ -1,0 +1,541 @@
+{% extends 'admin_panel/base.html' %}
+
+{% block title %}Admin Dashboard - RH{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Dashboard Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h2 mb-1">Admin Dashboard</h1>
+            <p class="text-muted">Welcome to the administration panel. Monitor and manage all system activities.</p>
+        </div>
+        <div class="d-flex">
+            <span class="badge bg-danger p-2 me-2">
+                <i class="bi bi-shield-check me-1"></i>
+                Admin Mode
+            </span>
+            <span class="badge bg-primary p-2">
+                <i class="bi bi-calendar-week me-1"></i>
+                <span id="currentDate">{{ current_date }}</span>
+            </span>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row mb-5">
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">
+                                Total Offers
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total_offers">0</div>
+                            <div class="mt-2 mb-0 text-muted text-xs">
+                                <span class="text-success mr-2">
+                                    <i class="bi bi-arrow-up"></i> 12%
+                                </span>
+                                <span>Since last month</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-briefcase fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Total Applications
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total_applications">0</div>
+                            <div class="mt-2 mb-0 text-muted text-xs">
+                                <span class="text-success mr-2">
+                                    <i class="bi bi-arrow-up"></i> 18%
+                                </span>
+                                <span>Since last month</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-person-check fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Internship Demands
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total_demands">0</div>
+                            <div class="mt-2 mb-0 text-muted text-xs">
+                                <span class="text-success mr-2">
+                                    <i class="bi bi-arrow-up"></i> 8%
+                                </span>
+                                <span>Since last month</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-clipboard-data fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Active Companies
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="total_companies">0</div>
+                            <div class="mt-2 mb-0 text-muted text-xs">
+                                <span class="text-success mr-2">
+                                    <i class="bi bi-arrow-up"></i> 5%
+                                </span>
+                                <span>Since last month</span>
+                            </div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="bi bi-building fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="row mb-5">
+        <div class="col-lg-8">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">System Overview</h6>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="chartDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            This Month
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="chartDropdown">
+                            <li><a class="dropdown-item" href="#" data-period="week">This Week</a></li>
+                            <li><a class="dropdown-item" href="#" data-period="month">This Month</a></li>
+                            <li><a class="dropdown-item" href="#" data-period="year">This Year</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="col-lg-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Quick Stats</h6>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="fw-bold text-primary">New Offers Today</div>
+                        <div class="text-muted small" id="new_offers_today">0</div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 60%" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold text-success">Applications Today</div>
+                        <div class="text-muted small" id="new_apps_today">0</div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: 75%" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="fw-bold text-info">Pending Approvals</div>
+                        <div class="text-muted small" id="pending_approvals">0</div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-info" role="progressbar" style="width: 45%" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="fw-bold text-warning">System Health</div>
+                        <div class="text-muted small">Excellent</div>
+                        <div class="progress mt-2" style="height: 5px;">
+                            <div class="progress-bar bg-warning" role="progressbar" style="width: 95%" aria-valuenow="95" aria-valuemin="0" aria-valuemax="100"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Offers Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Offers</h6>
+                    <a href="{% url 'admin:offers' %}" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="offers_table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Company</th>
+                                    <th>Location</th>
+                                    <th>Salary</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Internship Demands Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow">
+                <div class="card-header py-3 d-flex justify-content-between align-items-center">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Internship Demands</h6>
+                    <a href="#" class="btn btn-sm btn-outline-primary">View All</a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="demands_table">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Student</th>
+                                    <th>Offer</th>
+                                    <th>University</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card-hover {
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card-hover:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .border-left-primary {
+        border-left: 4px solid #4e73df !important;
+    }
+    .border-left-success {
+        border-left: 4px solid #1cc88a !important;
+    }
+    .border-left-info {
+        border-left: 4px solid #36b9cc !important;
+    }
+    .border-left-warning {
+        border-left: 4px solid #f6c23e !important;
+    }
+    .border-left-danger {
+        border-left: 4px solid #dc3545 !important;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+    
+    .table th {
+        font-weight: 600;
+        color: #4e73df;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .badge.bg-danger {
+        background-color: #dc3545 !important;
+    }
+</style>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const BASE_URL = "http://127.0.0.1:8000/api";
+    const access = localStorage.getItem("access");
+    let chartInstance = null;
+
+    if (!access) {
+        alert("No token found. Please login.");
+        window.location.href = "/api/auth/jwt-login/";
+        return;
+    }
+
+    const headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${access}`
+    };
+
+    // Set current date
+    const now = new Date();
+    const options = { year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('currentDate').textContent = now.toLocaleDateString('en-US', options);
+
+    // Fetch offers
+    async function loadOffers() {
+        try {
+            let res = await fetch(`${BASE_URL}/offers/`, { headers });
+            let data = await res.json();
+
+            document.getElementById("total_offers").textContent = data.length || 0;
+            
+            let tbody = document.querySelector("#offers_table tbody");
+            tbody.innerHTML = "";
+
+            // Show only recent 5 offers
+            const recentOffers = data.slice(0, 5);
+            
+            recentOffers.forEach(o => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge bg-light text-dark">#${o.id}</span></td>
+                        <td><strong>${o.title || '—'}</strong></td>
+                        <td>${o.company ? o.company.name : '—'}</td>
+                        <td>${o.location || '—'}</td>
+                        <td><span class="badge bg-success">${o.salary || 'Not specified'}</span></td>
+                        <td><span class="badge bg-info">Active</span></td>
+                    </tr>
+                `;
+            });
+
+            return data.length || 0;
+        } catch (err) { 
+            console.error("Error loading offers:", err);
+            return 0;
+        }
+    }
+
+    // Fetch applications count
+    async function loadApplicationsCount() {
+        try {
+            let res = await fetch(`${BASE_URL}/applications/`, { headers });
+            let data = await res.json();
+            const count = data.length || 0;
+            document.getElementById("total_applications").textContent = count;
+            document.getElementById("new_apps_today").textContent = Math.floor(count * 0.1) + " new today";
+            return count;
+        } catch (err) { 
+            console.error("Error loading applications:", err);
+            return 0;
+        }
+    }
+
+    // Fetch internship demands
+    async function loadInternshipDemands() {
+        try {
+            let res = await fetch(`${BASE_URL}/internship-demands/`, { headers });
+            let data = await res.json();
+            const count = data.length || 0;
+            document.getElementById("total_demands").textContent = count;
+            
+            let tbody = document.querySelector("#demands_table tbody");
+            tbody.innerHTML = "";
+
+            // Show only recent 5 demands
+            const recentDemands = data.slice(0, 5);
+            
+            recentDemands.forEach(d => {
+                const statusColor = d.status === 'pending' ? 'warning' : 
+                                  d.status === 'approved' ? 'success' : 
+                                  d.status === 'rejected' ? 'danger' : 'secondary';
+                
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="badge bg-light text-dark">#${d.id}</span></td>
+                        <td><strong>${d.student || '—'}</strong></td>
+                        <td>${d.offer_title || '—'}</td>
+                        <td>${d.university || '—'}</td>
+                        <td><span class="badge bg-${statusColor}">${d.status || '—'}</span></td>
+                        <td>${d.created_at ? new Date(d.created_at).toLocaleDateString() : '—'}</td>
+                    </tr>
+                `;
+            });
+
+            return count;
+        } catch (err) { 
+            console.error("Error loading demands:", err);
+            return 0;
+        }
+    }
+
+    // Fetch companies count
+    async function loadCompaniesCount() {
+        try {
+            // Update this endpoint based on your API
+            let res = await fetch(`${BASE_URL}/companies/`, { headers });
+            let data = await res.json();
+            const count = data.length || 0;
+            document.getElementById("total_companies").textContent = count;
+            return count;
+        } catch (err) { 
+            console.error("Error loading companies:", err);
+            return 0;
+        }
+    }
+
+    // Draw chart
+    function drawChart(offers, apps, demands, companies) {
+        const ctx = document.getElementById("chart").getContext("2d");
+        
+        // Destroy previous chart instance if exists
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+        
+        chartInstance = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels: ["Offers", "Applications", "Demands", "Companies"],
+                datasets: [{
+                    label: "Count",
+                    data: [offers, apps, demands, companies],
+                    backgroundColor: [
+                        'rgba(78, 115, 223, 0.8)',
+                        'rgba(28, 200, 138, 0.8)',
+                        'rgba(54, 185, 204, 0.8)',
+                        'rgba(220, 53, 69, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgba(78, 115, 223, 1)',
+                        'rgba(28, 200, 138, 1)',
+                        'rgba(54, 185, 204, 1)',
+                        'rgba(220, 53, 69, 1)'
+                    ],
+                    borderWidth: 1,
+                    borderRadius: 5
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 14 }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Initialize dashboard
+    async function init() {
+        try {
+            const offers = await loadOffers();
+            const apps = await loadApplicationsCount();
+            const demands = await loadInternshipDemands();
+            const companies = await loadCompaniesCount();
+            
+            // Set today's new offers
+            document.getElementById("new_offers_today").textContent = Math.floor(offers * 0.05) + " new today";
+            document.getElementById("pending_approvals").textContent = Math.floor(demands * 0.3) + " pending";
+            
+            drawChart(offers, apps, demands, companies);
+        } catch (error) {
+            console.error("Error initializing dashboard:", error);
+        }
+    }
+
+    // Initialize
+    init();
+
+    // Chart period dropdown
+    document.querySelectorAll('[data-period]').forEach(item => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            const period = this.getAttribute('data-period');
+            document.getElementById('chartDropdown').textContent = 
+                period === 'week' ? 'This Week' : 
+                period === 'month' ? 'This Month' : 'This Year';
+            
+            // In a real app, you would fetch new data based on the period
+            // For now, we'll just update the chart with dummy data
+            if (chartInstance) {
+                chartInstance.data.datasets[0].data = [
+                    Math.floor(Math.random() * 100),
+                    Math.floor(Math.random() * 200),
+                    Math.floor(Math.random() * 50),
+                    Math.floor(Math.random() * 30)
+                ];
+                chartInstance.update();
+            }
+        });
+    });
+});
+</script>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
