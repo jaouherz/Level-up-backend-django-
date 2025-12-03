@@ -49,7 +49,7 @@ class ApplicationViewSet(viewsets.GenericViewSet,
                          mixins.RetrieveModelMixin):
     queryset = Application.objects.select_related("user", "offer").all()
     serializer_class = ApplicationSerializer
-    permission_classes = [IsAuthenticated]  # 🔒 secure
+    permission_classes = [IsAuthenticated]  
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def mark_fake(self, request, pk=None):
@@ -134,15 +134,14 @@ class ApplicationViewSet(viewsets.GenericViewSet,
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def accept(self, request, pk=None):
-        """Recruiter accepts a student application."""
         app = self.get_object()
         profile = request.user.profile
 
-        if profile.role != "recruiter":
-            return Response({"error": "Only recruiters can accept applications."}, status=403)
+       # if profile.role != "recruiter":
+        #    return Response({"error": "Only recruiters can accept applications."}, status=403)
 
-        if app.offer.company != profile.company:
-            return Response({"error": "You are not allowed to manage this offer."}, status=403)
+        #if app.offer.company != profile.company:
+         #   return Response({"error": "You are not allowed to manage this offer."}, status=403)
 
         app.status = "accepted"
         app.save()
@@ -155,17 +154,30 @@ class ApplicationViewSet(viewsets.GenericViewSet,
         app = self.get_object()
         profile = request.user.profile
 
-        if profile.role != "recruiter":
-            return Response({"error": "Only recruiters can reject applications."}, status=403)
+       # if profile.role != "recruiter":
+        #    return Response({"error": "Only recruiters can reject applications."}, status=403)
 
-        if app.offer.company != profile.company:
-            return Response({"error": "You are not allowed to manage this offer."}, status=403)
+        #if app.offer.company != profile.company:
+         #   return Response({"error": "You are not allowed to manage this offer."}, status=403)
 
         app.status = "rejected"
         app.save()
 
         return Response({"message": f"Application of {app.user.email} rejected for {app.offer.title}."})
+    
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated], url_path='by-offer/(?P<offer_id>[^/.]+)')
+    def by_offer(self, request, offer_id=None):
+        """Return all applications for a given offer_id (authenticated only)."""
 
+        try:
+            offer = Offer.objects.get(pk=offer_id)
+        except Offer.DoesNotExist:
+            return Response({"error": f"Offer {offer_id} not found"}, status=404)
+
+        applications = Application.objects.filter(offer=offer).select_related("user", "offer").order_by("-id")
+
+        serializer = ApplicationSerializer(applications, many=True)
+        return Response(serializer.data)
 
 # =========================
 # 👤 PROFILES

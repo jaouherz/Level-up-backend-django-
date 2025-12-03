@@ -44,51 +44,113 @@
         </div>
     </div>
 
-    <!-- Candidates Section -->
-    <div class="row">
+    <!-- Tabs for Applicants and Ranked Candidates -->
+    <div class="row mb-4">
         <div class="col-12">
             <div class="card shadow">
-                <div class="card-header py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="m-0 font-weight-bold text-primary">
-                        <i class="bi bi-people me-2"></i>Candidates
-                    </h5>
-                    <span class="badge bg-primary fs-6" id="candidateCount">0 candidates</span>
+                <div class="card-header py-3">
+                    <ul class="nav nav-tabs card-header-tabs" id="candidatesTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="applicants-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#applicants" type="button" role="tab" 
+                                    aria-controls="applicants" aria-selected="true">
+                                <i class="bi bi-person-check me-2"></i>Applicants
+                                <span class="badge bg-primary ms-2" id="applicantsCount">0</span>
+                            </button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="ranked-tab" data-bs-toggle="tab" 
+                                    data-bs-target="#ranked" type="button" role="tab" 
+                                    aria-controls="ranked" aria-selected="false">
+                                <i class="bi bi-graph-up me-2"></i>Ranked Candidates
+                                <span class="badge bg-info ms-2" id="rankedCount">0</span>
+                            </button>
+                        </li>
+                    </ul>
                 </div>
                 <div class="card-body">
-                    <!-- Loading State -->
-                    <div id="candidatesLoading" class="text-center py-5">
-                        <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
-                            <span class="visually-hidden">Loading candidates...</span>
-                        </div>
-                        <p class="mt-3 text-muted">Loading candidates...</p>
-                    </div>
+                    <div class="tab-content" id="candidatesTabContent">
+                        <!-- Applicants Tab -->
+                        <div class="tab-pane fade show active" id="applicants" role="tabpanel" 
+                             aria-labelledby="applicants-tab">
+                            <!-- Loading State -->
+                            <div id="applicantsLoading" class="text-center py-5">
+                                <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+                                    <span class="visually-hidden">Loading applicants...</span>
+                                </div>
+                                <p class="mt-3 text-muted">Loading applicants...</p>
+                            </div>
 
-                    <!-- Candidates Table -->
-                    <div class="table-responsive">
-                        <table class="table table-hover" id="candidatesTable">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Candidate</th>
-                                    <th>Field</th>
-                                    <th>GPA</th>
-                                    <th>Score</th>
-                                    <th>Predicted Fit</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <!-- Candidates will be loaded here -->
-                            </tbody>
-                        </table>
-                    </div>
+                            <!-- Applicants Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="applicantsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Candidate</th>
+                                            <th>Field</th>
+                                            <th>GPA</th>
+                                            <th>Score</th>
+                                            <th>Predicted Fit</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Applicants will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
 
-                    <!-- Empty State -->
-                    <div id="emptyState" class="text-center py-5 d-none">
-                        <div class="empty-icon mb-4">
-                            <i class="bi bi-people display-1 text-muted"></i>
+                            <!-- Empty State -->
+                            <div id="applicantsEmptyState" class="text-center py-5 d-none">
+                                <div class="empty-icon mb-4">
+                                    <i class="bi bi-person-slash display-1 text-muted"></i>
+                                </div>
+                                <h4 class="text-muted mb-3">No applicants yet</h4>
+                                <p class="text-muted mb-4">No candidates have applied to this offer yet.</p>
+                            </div>
                         </div>
-                        <h4 class="text-muted mb-3">No candidates yet</h4>
-                        <p class="text-muted mb-4">No candidates have applied to this offer yet.</p>
+
+                        <!-- Ranked Candidates Tab -->
+                        <div class="tab-pane fade" id="ranked" role="tabpanel" 
+                             aria-labelledby="ranked-tab">
+                            <!-- Loading State -->
+                            <div id="rankedLoading" class="text-center py-5">
+                                <div class="spinner-border text-info" style="width: 3rem; height: 3rem;" role="status">
+                                    <span class="visually-hidden">Loading ranked candidates...</span>
+                                </div>
+                                <p class="mt-3 text-muted">Loading ranked candidates...</p>
+                            </div>
+
+                            <!-- Ranked Candidates Table -->
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="rankedTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Candidate</th>
+                                            <th>Field</th>
+                                            <th>GPA</th>
+                                            <th>Score</th>
+                                            <th>Predicted Fit</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Ranked candidates will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Empty State -->
+                            <div id="rankedEmptyState" class="text-center py-5 d-none">
+                                <div class="empty-icon mb-4">
+                                    <i class="bi bi-graph-down display-1 text-muted"></i>
+                                </div>
+                                <h4 class="text-muted mb-3">No ranked candidates</h4>
+                                <p class="text-muted mb-4">Ranked candidates will appear here once available.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -144,12 +206,149 @@
     .table-hover tbody tr:hover {
         background-color: rgba(78, 115, 223, 0.05);
     }
+
+    .status-badge {
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .status-pending {
+        background-color: #fef3c7;
+        color: #92400e;
+        border: 1px solid #fbbf24;
+    }
+    
+    .status-accepted {
+        background-color: #d1fae5;
+        color: #065f46;
+        border: 1px solid #10b981;
+    }
+    
+    .status-rejected {
+        background-color: #fee2e2;
+        color: #991b1b;
+        border: 1px solid #ef4444;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .btn-action {
+        min-width: 90px;
+        font-size: 0.8rem;
+        padding: 4px 8px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-accept {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: none;
+        color: white;
+    }
+
+    .btn-accept:hover {
+        background: linear-gradient(135deg, #059669, #047857);
+        color: white;
+    }
+
+    .btn-reject {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border: none;
+        color: white;
+    }
+
+    .btn-reject:hover {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        color: white;
+    }
+
+    .btn-view {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        border: none;
+        color: white;
+    }
+
+    .btn-view:hover {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        color: white;
+    }
+
+    .rank-badge {
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    .rank-1 {
+        background: linear-gradient(135deg, #FFD700, #FFA500);
+        color: #000;
+    }
+    
+    .rank-2 {
+        background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+        color: #000;
+    }
+    
+    .rank-3 {
+        background: linear-gradient(135deg, #CD7F32, #A0522D);
+        color: #fff;
+    }
+    
+    .rank-other {
+        background: linear-gradient(135deg, #4e73df, #2e59d9);
+        color: #fff;
+    }
+
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        font-weight: 500;
+        padding: 0.75rem 1.5rem;
+    }
+    
+    .nav-tabs .nav-link.active {
+        color: #4e73df;
+        border-bottom: 3px solid #4e73df;
+        background-color: transparent;
+    }
+    
+    .nav-tabs .nav-link:hover {
+        color: #4e73df;
+    }
 </style>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         loadOffer();
-        loadCandidates();
+        loadApplicants();
+        loadRankedCandidates();
+        
+        // Add event listener for tab changes to refresh data
+        document.getElementById('applicants-tab').addEventListener('click', function() {
+            loadApplicants();
+        });
+        
+        document.getElementById('ranked-tab').addEventListener('click', function() {
+            loadRankedCandidates();
+        });
     });
 
     const OFFER_ID = {{ offer_id }};
@@ -232,6 +431,7 @@
             `;
 
         } catch (error) {
+            console.error('Error loading offer:', error);
             document.getElementById("offerInfo").innerHTML = `
                 <div class="col-12 text-center py-3">
                     <div class="alert alert-danger">
@@ -243,99 +443,568 @@
     }
 
     // -------------------
+    // LOAD APPLICANTS (Actual Applicants)
+    // -------------------
+    async function loadApplicants() {
+        try {
+            const access = localStorage.getItem("access");
+
+            // Fetch applications for this offer
+            const res = await fetch(`/api/applications/by-offer/${OFFER_ID}/`, {
+                headers: { "Authorization": "Bearer " + access }
+            });
+
+            if (!res.ok) {
+                throw new Error(`API failed: ${res.status}`);
+            }
+
+            const applications = await res.json();
+            console.log('Applicants data:', applications);
+
+            const tbody = document.querySelector('#applicantsTable tbody');
+            const loading = document.getElementById("applicantsLoading");
+            const emptyState = document.getElementById("applicantsEmptyState");
+
+            loading.style.display = 'none';
+
+            // Update applicants count
+            document.getElementById('applicantsCount').textContent = applications.length || 0;
+
+            if (!applications || applications.length === 0) {
+                emptyState.classList.remove('d-none');
+                tbody.innerHTML = '';
+                return;
+            }
+
+            emptyState.classList.add('d-none');
+            tbody.innerHTML = '';
+
+            applications.forEach((application, index) => {
+                const candidate = application.user;
+                const applicationId = application.id;
+                const applicationStatus = application.status || 'pending';
+                
+                // Convert API value: 0.71 → 71
+                const fitPercent = Math.round(application.predicted_fit * 100);
+
+                const fitClass = fitPercent >= 80 ? 'fit-excellent'
+                    : fitPercent >= 60 ? 'fit-good'
+                    : 'fit-poor';
+
+                // Determine status class and text
+                let statusClass = 'status-pending';
+                let statusText = 'Pending';
+                
+                if (applicationStatus.toLowerCase() === 'accepted') {
+                    statusClass = 'status-accepted';
+                    statusText = 'Accepted';
+                } else if (applicationStatus.toLowerCase() === 'rejected') {
+                    statusClass = 'status-rejected';
+                    statusText = 'Rejected';
+                }
+
+                // Determine which buttons to show
+                let actionButtons = '';
+                if (applicationStatus.toLowerCase() === 'pending') {
+                    actionButtons = `
+                        <div class="action-buttons">
+                            <button class="btn btn-action btn-accept" 
+                                    onclick="handleAccept(${applicationId}, this, '${candidate.email}')">
+                                <i class="bi bi-check-circle me-1"></i>Accept
+                            </button>
+                            <button class="btn btn-action btn-reject"
+                                    onclick="handleReject(${applicationId}, this, '${candidate.email}')">
+                                <i class="bi bi-x-circle me-1"></i>Reject
+                            </button>
+                            <button class="btn btn-outline-danger btn-sm"
+                                    onclick="markFake('${candidate.email}', ${applicationId})">
+                                <i class="bi bi-x-circle me-1"></i>Fake
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionButtons = `
+                        <div class="action-buttons">
+                            <span class="badge ${statusClass}">
+                                ${statusText}
+                            </span>
+                            ${applicationStatus.toLowerCase() === 'accepted' ? 
+                                `<button class="btn btn-outline-success btn-sm"
+                                        onclick="viewInternshipDemand(${candidate.id})">
+                                    <i class="bi bi-file-earmark-text me-1"></i>Internship
+                                </button>` : ''
+                            }
+                        </div>
+                    `;
+                }
+
+                const row = document.createElement('tr');
+                row.className = 'candidate-card';
+                row.id = `applicant-${candidate.email.replace(/[@.]/g, '-')}`;
+                row.dataset.applicationId = applicationId;
+
+                row.innerHTML = `
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                                 style="width: 40px; height: 40px;">
+                                <i class="bi bi-person text-white"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">${candidate.email}</div>
+                                <small class="text-muted">Applicant</small>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="align-middle">${candidate.field_of_study || "-"}</td>
+
+                    <td class="align-middle">
+                        <span class="badge bg-light text-dark fs-6">${candidate.gpa || "-"}</span>
+                    </td>
+
+                    <td class="align-middle">
+                        <span class="badge bg-primary fs-6">${candidate.score || 0}</span>
+                    </td>
+
+                    <td class="align-middle">
+                        <span class="fit-badge ${fitClass}">
+                            ${fitPercent}% Match
+                        </span>
+                    </td>
+
+                    <td class="align-middle">
+                        <span class="status-badge ${statusClass}">
+                            ${statusText}
+                        </span>
+                    </td>
+
+                    <td class="align-middle">
+                        ${actionButtons}
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+        } catch (error) {
+            console.error('Error loading applicants:', error);
+            document.getElementById('applicantsLoading').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error loading applicants. Please try again.
+                    <br><small>${error.message}</small>
+                </div>
+            `;
+        }
+    }
+
+    // -------------------
     // LOAD RANKED CANDIDATES
     // -------------------
-    async function loadCandidates() {
-    try {
-        const access = localStorage.getItem("access");
+    async function loadRankedCandidates() {
+        try {
+            const access = localStorage.getItem("access");
 
-        // Real API call
-        const res = await fetch(`/api/offers/${OFFER_ID}/ranked_candidates/`, {
-            headers: { "Authorization": "Bearer " + access }
-        });
+            // Fetch ranked candidates for this offer
+            const res = await fetch(`/api/offers/${OFFER_ID}/ranked_candidates/`, {
+                headers: { "Authorization": "Bearer " + access }
+            });
 
-        const data = await res.json();
+            if (!res.ok) {
+                throw new Error(`Ranked candidates API failed: ${res.status}`);
+            }
 
-        const tbody = document.querySelector('#candidatesTable tbody');
-        const loading = document.getElementById("candidatesLoading");
-        const emptyState = document.getElementById("emptyState");
+            const data = await res.json();
+            console.log('Ranked candidates data:', data);
 
-        loading.style.display = 'none';
+            const tbody = document.querySelector('#rankedTable tbody');
+            const loading = document.getElementById("rankedLoading");
+            const emptyState = document.getElementById("rankedEmptyState");
 
-        // Candidate count
-        document.getElementById('candidateCount').textContent =
-            `${data.candidates?.length || 0} candidates`;
+            loading.style.display = 'none';
 
-        if (!data.candidates || data.candidates.length === 0) {
-            emptyState.classList.remove('d-none');
+            // Update ranked count
+            const candidates = data.candidates || [];
+            document.getElementById('rankedCount').textContent = candidates.length || 0;
+
+            if (!candidates || candidates.length === 0) {
+                emptyState.classList.remove('d-none');
+                tbody.innerHTML = '';
+                return;
+            }
+
+            emptyState.classList.add('d-none');
+            tbody.innerHTML = '';
+
+            candidates.forEach((candidate, index) => {
+                // Convert API value: 0.71 → 71
+                const fitPercent = Math.round(candidate.predicted_fit * 100);
+
+                const fitClass = fitPercent >= 80 ? 'fit-excellent'
+                    : fitPercent >= 60 ? 'fit-good'
+                    : 'fit-poor';
+
+                // Determine rank class
+                let rankClass = 'rank-other';
+                if (index === 0) rankClass = 'rank-1';
+                else if (index === 1) rankClass = 'rank-2';
+                else if (index === 2) rankClass = 'rank-3';
+
+                const row = document.createElement('tr');
+                row.className = 'candidate-card';
+                row.id = `ranked-${candidate.email.replace(/[@.]/g, '-')}`;
+
+                row.innerHTML = `
+                    <td class="align-middle">
+                        <div class="rank-badge ${rankClass}">
+                            ${index + 1}
+                        </div>
+                    </td>
+
+                    <td>
+                        <div class="d-flex align-items-center">
+                            <div class="bg-info rounded-circle d-flex align-items-center justify-content-center me-3"
+                                 style="width: 40px; height: 40px;">
+                                <i class="bi bi-person text-white"></i>
+                            </div>
+                            <div>
+                                <div class="fw-semibold">${candidate.email}</div>
+                                <small class="text-muted">Potential Candidate</small>
+                            </div>
+                        </div>
+                    </td>
+
+                    <td class="align-middle">${candidate.field_of_study || "-"}</td>
+
+                    <td class="align-middle">
+                        <span class="badge bg-light text-dark fs-6">${candidate.gpa || "-"}</span>
+                    </td>
+
+                    <td class="align-middle">
+                        <span class="badge bg-info fs-6">${candidate.score || 0}</span>
+                    </td>
+
+                    <td class="align-middle">
+                        <span class="fit-badge ${fitClass}">
+                            ${fitPercent}% Match
+                        </span>
+                    </td>
+
+                    <td class="align-middle">
+                        <div class="action-buttons">
+                            <button class="btn btn-outline-primary btn-sm"
+                                    onclick="inviteCandidate('${candidate.email}')">
+                                <i class="bi bi-envelope me-1"></i>Invite
+                            </button>
+                            <button class="btn btn-outline-success btn-sm"
+                                    onclick="viewProfile('${candidate.email}')">
+                                <i class="bi bi-eye me-1"></i>View
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+
+        } catch (error) {
+            console.error('Error loading ranked candidates:', error);
+            document.getElementById('rankedLoading').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error loading ranked candidates. Please try again.
+                    <br><small>${error.message}</small>
+                </div>
+            `;
+        }
+    }
+
+    // -------------------
+    // ACCEPT CANDIDATE
+    // -------------------
+    async function handleAccept(applicationId, buttonElement, email) {
+        if (!confirm(`Are you sure you want to accept ${email}?`)) {
             return;
         }
 
-        tbody.innerHTML = '';
+        const access = localStorage.getItem("access");
+        
+        try {
+            // Show loading state
+            const originalHTML = buttonElement.innerHTML;
+            buttonElement.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Processing...';
+            buttonElement.disabled = true;
 
-        data.candidates.forEach((candidate, index) => {
+            const response = await fetch(`/api/applications/${applicationId}/accept/`, {
+                method: 'POST',
+                headers: { 
+                    "Authorization": "Bearer " + access,
+                    "Content-Type": "application/json"
+                }
+            });
 
-            // Convert API value: 0.71 → 71
-            const fitPercent = Math.round(candidate.predicted_fit * 100);
+            if (response.ok) {
+                showToast('Candidate accepted successfully!', 'success');
+                
+                // Update UI immediately
+                updateApplicantStatus(applicationId, 'accepted');
+                
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || errorData.message || 'Failed to accept candidate');
+            }
+            
+        } catch (error) {
+            console.error('Error accepting candidate:', error);
+            showToast(`Error: ${error.message}`, 'error');
+            
+            // Restore button
+            buttonElement.innerHTML = originalHTML;
+            buttonElement.disabled = false;
+        }
+    }
 
-            const fitClass = fitPercent >= 80 ? 'fit-excellent'
-                : fitPercent >= 60 ? 'fit-good'
-                : 'fit-poor';
+    // -------------------
+    // REJECT CANDIDATE
+    // -------------------
+    async function handleReject(applicationId, buttonElement, email) {
+        if (!confirm(`Are you sure you want to reject ${email}?`)) {
+            return;
+        }
 
-            const row = document.createElement('tr');
-            row.className = 'candidate-card';
+        const access = localStorage.getItem("access");
+        
+        try {
+            // Show loading state
+            const originalHTML = buttonElement.innerHTML;
+            buttonElement.innerHTML = '<i class="bi bi-hourglass-split me-1"></i>Processing...';
+            buttonElement.disabled = true;
 
-            row.innerHTML = `
-                <td>
-                    <div class="d-flex align-items-center">
-                        <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
-                             style="width: 40px; height: 40px;">
-                            <i class="bi bi-person text-white"></i>
-                        </div>
-                        <div>
-                            <div class="fw-semibold">${candidate.email}</div>
-                            <small class="text-muted">Candidate</small>
-                        </div>
-                    </div>
-                </td>
+            const response = await fetch(`/api/applications/${applicationId}/reject/`, {
+                method: 'POST',
+                headers: { 
+                    "Authorization": "Bearer " + access,
+                    "Content-Type": "application/json"
+                }
+            });
 
-                <td class="align-middle">${candidate.field_of_study ?? "-"}</td>
+            if (response.ok) {
+                showToast('Candidate rejected successfully!', 'success');
+                
+                // Update UI immediately
+                updateApplicantStatus(applicationId, 'rejected');
+                
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || errorData.message || 'Failed to reject candidate');
+            }
+            
+        } catch (error) {
+            console.error('Error rejecting candidate:', error);
+            showToast(`Error: ${error.message}`, 'error');
+            
+            // Restore button
+            buttonElement.innerHTML = originalHTML;
+            buttonElement.disabled = false;
+        }
+    }
 
-                <td class="align-middle">
-                    <span class="badge bg-light text-dark fs-6">${candidate.gpa ?? "-"}</span>
-                </td>
+    // -------------------
+    // UPDATE APPLICANT STATUS IN UI
+    // -------------------
+    function updateApplicantStatus(applicationId, newStatus) {
+        // Find the row with matching application ID
+        const row = document.querySelector(`tr[data-application-id="${applicationId}"]`);
+        if (!row) return;
 
-                <td class="align-middle">
-                    <span class="badge bg-primary fs-6">${candidate.score ?? 0}</span>
-                </td>
-
-                <td class="align-middle">
-                    <span class="fit-badge ${fitClass}">
-                        ${fitPercent}% Match
-                    </span>
-                </td>
-
-                <td class="align-middle">
-                    <button class="btn btn-outline-danger btn-sm"
-                            onclick="markFake('${candidate.email}')">
-                        <i class="bi bi-x-circle me-1"></i>Mark Fake
+        const statusCell = row.querySelector('td:nth-child(6)');
+        const actionsCell = row.querySelector('td:nth-child(7)');
+        
+        // Update status
+        let statusClass, statusText;
+        if (newStatus === 'accepted') {
+            statusClass = 'status-accepted';
+            statusText = 'Accepted';
+        } else if (newStatus === 'rejected') {
+            statusClass = 'status-rejected';
+            statusText = 'Rejected';
+        } else {
+            statusClass = 'status-pending';
+            statusText = 'Pending';
+        }
+        
+        statusCell.innerHTML = `
+            <span class="status-badge ${statusClass}">
+                ${statusText}
+            </span>
+        `;
+        
+        // Update actions
+        const email = row.id.replace('applicant-', '').replace(/-/g, '.');
+        if (newStatus === 'pending') {
+            actionsCell.innerHTML = `
+                <div class="action-buttons">
+                    <button class="btn btn-action btn-accept" 
+                            onclick="handleAccept(${applicationId}, this, '${email}')">
+                        <i class="bi bi-check-circle me-1"></i>Accept
                     </button>
-                </td>
+                    <button class="btn btn-action btn-reject"
+                            onclick="handleReject(${applicationId}, this, '${email}')">
+                        <i class="bi bi-x-circle me-1"></i>Reject
+                    </button>
+                    <button class="btn btn-outline-danger btn-sm"
+                            onclick="markFake('${email}', ${applicationId})">
+                        <i class="bi bi-x-circle me-1"></i>Fake
+                    </button>
+                </div>
             `;
+        } else {
+            actionsCell.innerHTML = `
+                <div class="action-buttons">
+                    <span class="badge ${statusClass}">
+                        ${statusText}
+                    </span>
+                    ${newStatus === 'accepted' ? 
+                        `<button class="btn btn-outline-success btn-sm"
+                                onclick="viewInternshipDemand('${email}')">
+                            <i class="bi bi-file-earmark-text me-1"></i>Internship
+                        </button>` : ''
+                    }
+                </div>
+            `;
+        }
+    }
 
-            tbody.appendChild(row);
-        });
+    // -------------------
+    // INVITE CANDIDATE (For ranked candidates)
+    // -------------------
+    async function inviteCandidate(email) {
+        if (!confirm(`Send invitation to ${email}?`)) {
+            return;
+        }
+        
+        // Here you would implement the invitation logic
+        // For now, just show a success message
+        showToast(`Invitation sent to ${email}`, 'info');
+    }
 
-    } catch (error) {
-        console.error('Error loading candidates:', error);
-        document.getElementById('candidatesLoading').innerHTML = `
-            <div class="alert alert-danger">
-                <i class="bi bi-exclamation-triangle me-2"></i>
-                Error loading candidates. Please try again.
+    // -------------------
+    // VIEW CANDIDATE PROFILE
+    // -------------------
+    async function viewProfile(email) {
+        try {
+            const access = localStorage.getItem("access");
+            // You might need to adjust this endpoint based on your API
+            const response = await fetch(`/api/profiles/?email=${encodeURIComponent(email)}`, {
+                headers: { "Authorization": "Bearer " + access }
+            });
+            
+            if (response.ok) {
+                const profiles = await response.json();
+                if (profiles.length > 0) {
+                    const profile = profiles[0];
+                    alert(`Candidate Profile:\n\n` +
+                          `Email: ${profile.user?.email || email}\n` +
+                          `Field of Study: ${profile.field_of_study || 'Not specified'}\n` +
+                          `GPA: ${profile.gpa || 'Not specified'}\n` +
+                          `Score: ${profile.score || 0}\n` +
+                          `Skills: ${profile.skills ? profile.skills.join(', ') : 'None'}`);
+                } else {
+                    alert(`Profile not found for ${email}`);
+                }
+            } else {
+                alert('Could not load candidate profile.');
+            }
+        } catch (error) {
+            console.error('Error loading profile:', error);
+            alert('Error loading candidate profile');
+        }
+    }
+
+    // -------------------
+    // VIEW INTERNSHIP DEMAND (For accepted candidates)
+    // -------------------
+    async function viewInternshipDemand(emailOrUserId) {
+        // Here you would navigate to or show internship demand details
+        alert(`Viewing internship demand for: ${emailOrUserId}\n\nThis would show internship demand details.`);
+    }
+
+    // -------------------
+    // MARK FAKE CANDIDATE
+    // -------------------
+    async function markFake(email, applicationId) {
+        if (!confirm(`Mark ${email} as fake candidate?`)) {
+            return;
+        }
+        
+        try {
+            const access = localStorage.getItem("access");
+            // Implement your fake marking logic here
+            // This is just a placeholder
+            showToast(`Candidate ${email} marked as fake`, 'warning');
+            
+            // Optionally remove from the list
+            // const row = document.getElementById(`applicant-${email.replace(/[@.]/g, '-')}`);
+            // if (row) row.remove();
+            
+        } catch (error) {
+            console.error('Error marking fake:', error);
+            showToast('Error marking candidate as fake', 'error');
+        }
+    }
+
+    // -------------------
+    // UTILITY FUNCTIONS
+    // -------------------
+    function showToast(message, type = 'success') {
+        // Create toast element
+        const toastId = 'toast-' + Date.now();
+        const toast = document.createElement('div');
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0`;
+        toast.setAttribute('role', 'alert');
+        toast.setAttribute('aria-live', 'assertive');
+        toast.setAttribute('aria-atomic', 'true');
+        toast.id = toastId;
+        
+        toast.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                    ${message}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
             </div>
         `;
+        
+        // Add to toast container
+        let toastContainer = document.getElementById('toastContainer');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toastContainer';
+            toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+            document.body.appendChild(toastContainer);
+        }
+        
+        toastContainer.appendChild(toast);
+        
+        // Initialize and show toast
+        const bsToast = new bootstrap.Toast(toast, { delay: 3000 });
+        bsToast.show();
+        
+        // Remove toast after it's hidden
+        toast.addEventListener('hidden.bs.toast', function () {
+            toast.remove();
+        });
     }
-}
+
+    // Original functions (keep if needed)
+    async function replaceFakes() {
+        // Your existing replaceFakes function
+        showToast('Replacing fake candidates...', 'info');
+        // Add your logic here
+    }
+
 </script>
 
 {% endblock %}
