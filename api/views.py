@@ -1,5 +1,8 @@
 from datetime import date, datetime
-
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import A4
+from django.core.mail import EmailMessage
+from io import BytesIO
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
 from django.contrib import messages
@@ -438,16 +441,27 @@ class OfferViewSet(viewsets.ModelViewSet):
             skills.append(skill)
 
         offer.required_skills.set(skills)
+
+        offer_data = {
+            "id": offer.id,
+            "title": offer.title,
+            "description": offer.description,
+            "field_required": offer.field_required,
+            "level_required": offer.level_required,
+            "location": offer.location,
+            "company": profile.company.name,  # Send company name as string
+            "company_id": profile.company.id,
+            "is_closed": offer.is_closed,
+            "deadline": offer.deadline.isoformat() if offer.deadline else None,
+            "created_at": offer.created_at.isoformat(),
+            "required_skills": [skill.name for skill in skills]
+        }
         channel_layer = get_channel_layer()
         async_to_sync(channel_layer.group_send)(
             "offers",
             {
                 "type": "send_new_offer",
-                "offer": {
-                    "id": offer.id,
-                    "title": offer.title,
-                    "company": profile.company.name,
-                }
+                "offer": offer_data
             }
         )
         return Response({
@@ -738,7 +752,6 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def university_demands(self, request):
-        """ University → list all demands from students belonging to that university """
         profile = request.user.profile
 
         if profile.role != "university":
@@ -825,100 +838,88 @@ class InternshipDemandViewSet(viewsets.ModelViewSet):
                 "score": student_user.profile.score
             },
             "accepted_applications": apps_serialized,
-            "internship_demands": demands_data  # <-- now a list
+            "internship_demands": demands_data  
         })
 
-        @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-        def generate_convention(self, request, pk=None):
-            demand = self.get_object()
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def generate_convention(self, request, pk=None):
+        demand = self.get_object()
 
-            if request.user != demand.student:
-                return Response({"error": "You can generate only your own internship documents."}, status=403)
+        if request.user != demand.student:
+            return Response({"error": "You can generate only your own internship documents."}, status=403)
 
-            if demand.status != "approved":
-                return Response({"error": "University has not approved this internship yet."}, status=400)
+        if demand.status != "approved":
+            return Response({"error": "University has not approved this internship yet."}, status=400)
 
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import A4
-            from django.core.mail import EmailMessage
-            from io import BytesIO
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
 
-            buffer = BytesIO()
-            p = canvas.Canvas(buffer, pagesize=A4)
+        p.setFont("Helvetica", 16)
+        p.drawString(50, 800, "Convention de Stage")
 
-            p.setFont("Helvetica", 16)
-            p.drawString(50, 800, "Convention de Stage")
+        p.setFont("Helvetica", 12)
+        p.drawString(50, 760, f"Université : {demand.university.name}")
+        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+        p.drawString(50, 720, f"Entreprise : {demand.application.offer.company.name}")
+        p.drawString(50, 700, f"Offre : {demand.application.offer.title}")
+        p.drawString(50, 660, "Ce document confirme le stage de l'étudiant au sein de l'entreprise.")
+        p.drawString(50, 640, "Signature Université: _____________________")
+        p.drawString(50, 620, "Signature Entreprise: _____________________")
+        p.drawString(50, 600, "Signature Étudiant: _______________________")
 
-            p.setFont("Helvetica", 12)
-            p.drawString(50, 760, f"Université : {demand.university.name}")
-            p.drawString(50, 740, f"Étudiant : {demand.student.email}")
-            p.drawString(50, 720, f"Entreprise : {demand.application.offer.company.name}")
-            p.drawString(50, 700, f"Offre : {demand.application.offer.title}")
-
-            p.drawString(50, 660, "Ce document confirme le stage de l'étudiant au sein de l'entreprise.")
-            p.drawString(50, 640, "Signature Université: _____________________")
-            p.drawString(50, 620, "Signature Entreprise: _____________________")
-            p.drawString(50, 600, "Signature Étudiant: _______________________")
-
-            p.showPage()
-            p.save()
-
-            buffer.seek(0)
-            pdf_data = buffer.getvalue()
+        p.showPage()
+        p.save()
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
 
             # Send by email
-            email = EmailMessage(
-                subject="Convention de Stage",
-                body="Veuillez trouver ci-joint votre convention de stage.",
-                to=[request.user.email]
-            )
-            email.attach("Convention_de_Stage.pdf", pdf_data, "application/pdf")
-            email.send()
+        email = EmailMessage(
+            subject="Convention de Stage",
+            body="Veuillez trouver ci-joint votre convention de stage.",
+            to=[request.user.email]
+        )
+        email.attach("Convention_de_Stage.pdf", pdf_data, "application/pdf")
+        email.send()
 
-            return Response({"message": "Convention sent by email."})
+        return Response({"message": "Convention sent by email."})
 
-        @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
-        def generate_letter(self, request, pk=None):
-            demand = self.get_object()
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def generate_letter(self, request, pk=None):
+        demand = self.get_object()
 
-            if request.user != demand.student:
-                return Response({"error": "You can generate only your own internship documents."}, status=403)
+        if request.user != demand.student:
+            return Response({"error": "You can generate only your own internship documents."}, status=403)
 
-            if demand.status != "approved":
-                return Response({"error": "University has not approved this internship yet."}, status=400)
+        if demand.status != "approved":
+            return Response({"error": "University has not approved this internship yet."}, status=400)
 
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import A4
-            from django.core.mail import EmailMessage
-            from io import BytesIO
+        buffer = BytesIO()
+        p = canvas.Canvas(buffer, pagesize=A4)
 
-            buffer = BytesIO()
-            p = canvas.Canvas(buffer, pagesize=A4)
+        p.setFont("Helvetica", 16)
+        p.drawString(50, 800, "Lettre d'Affectation")
 
-            p.setFont("Helvetica", 16)
-            p.drawString(50, 800, "Lettre d'Affectation")
+        p.setFont("Helvetica", 12)
+        p.drawString(50, 760, f"Université : {demand.university.name}")
+        p.drawString(50, 740, f"Étudiant : {demand.student.email}")
+        p.drawString(50, 720, f"Affectation : {demand.application.offer.company.name}")
 
-            p.setFont("Helvetica", 12)
-            p.drawString(50, 760, f"Université : {demand.university.name}")
-            p.drawString(50, 740, f"Étudiant : {demand.student.email}")
-            p.drawString(50, 720, f"Affectation : {demand.application.offer.company.name}")
+        p.drawString(50, 700, "L'étudiant est affecté officiellement à l'entreprise susmentionnée.")
+        p.drawString(50, 680, "Signature de l'Université : ____________________")
 
-            p.drawString(50, 700, "L'étudiant est affecté officiellement à l'entreprise susmentionnée.")
-            p.drawString(50, 680, "Signature de l'Université : ____________________")
+        p.showPage()
+        p.save()
 
-            p.showPage()
-            p.save()
+        buffer.seek(0)
+        pdf_data = buffer.getvalue()
 
-            buffer.seek(0)
-            pdf_data = buffer.getvalue()
-
-            email = EmailMessage(
+        email = EmailMessage(
                 subject="Lettre d'Affectation",
                 body="Veuillez trouver ci-joint votre lettre d’affectation.",
                 to=[request.user.email]
-            )
-            email.attach("Lettre_Affectation.pdf", pdf_data, "application/pdf")
-            email.send()
+        )
+        email.attach("Lettre_Affectation.pdf", pdf_data, "application/pdf")
+        email.send()
 
-            return Response({"message": "Lettre d'affectation sent by email."})
+        return Response({"message": "Lettre d'affectation sent by email."})
 
