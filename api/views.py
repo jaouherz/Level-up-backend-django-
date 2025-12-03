@@ -651,22 +651,28 @@ class InternshipDemandSerializer(serializers.ModelSerializer):
         slug_field='email',
         read_only=True
     )
+
     university = serializers.SlugRelatedField(
         slug_field="name",
         read_only=True
     )
+    
     application = serializers.PrimaryKeyRelatedField(read_only=True)
 
     offer_title = serializers.SerializerMethodField()
+    student_id = serializers.SerializerMethodField()  # <---- ADD THIS
 
     class Meta:
         model = InternshipDemand
-        fields = '__all__'  
+        fields = '__all__'  # student_id will be included automatically
 
     def get_offer_title(self, obj):
         if obj.application and obj.application.offer:
             return obj.application.offer.title
         return None
+
+    def get_student_id(self, obj):
+        return obj.student.id  # or str(obj.student.id) if you want string
 
 class InternshipDemandViewSet(viewsets.ModelViewSet):
     queryset = InternshipDemand.objects.select_related("student", "application", "university")

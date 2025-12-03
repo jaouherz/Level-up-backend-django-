@@ -340,9 +340,8 @@
             const statusClass = `demand-${status}`;
             const statusBadge = getStatusBadge(status);
             
-            // Extract student ID from the student field or use a default
-            const studentId = extractStudentId(d.student) || 'N/A';
-            
+            const studentId = extractStudentId(d.student_id) || 'N/A';
+            const name = extractStudentName(d.student) || 'N/A'
             demandCard.innerHTML = `
                 <div class="card demand-card ${statusClass} h-100">
                     <div class="card-body">
@@ -350,10 +349,10 @@
                         <div class="student-header">
                             <div class="student-info">
                                 <div class="d-flex align-items-center mb-2">
-                                    <h5 class="card-title mb-0 me-2">${d.student}</h5>
-                                    <span class="student-id-badge">
+                                    <h5 class="card-title mb-0 me-2">${name}</h5>
+                                 <!--   <span class="student-id-badge">
                                         <i class="bi bi-person-badge me-1"></i>ID: ${studentId}
-                                    </span>
+                                    </span> -->
                                 </div>
                                 <p class="text-muted small mb-0">
                                     <i class="bi bi-file-text me-1"></i>Application: ${d.application}
@@ -398,20 +397,20 @@
             container.appendChild(demandCard);
         });
     }
+    function extractStudentName(email) {
+        if (!email) return 'N/A';
+        return email.replace('@gmail.com', '');
+    }
 
     function extractStudentId(studentField) {
-        // Try to extract student ID from the student field
-        // This could be in format "Student Name (ID: 123)" or just the ID
+
         if (!studentField) return null;
         
-        // If it's just a number, return it
         if (!isNaN(studentField)) return studentField;
         
-        // Try to extract ID from parentheses
         const idMatch = studentField.match(/\(ID:\s*(\d+)\)/i) || studentField.match(/ID:\s*(\d+)/i);
         if (idMatch) return idMatch[1];
         
-        // If it contains numbers, try to extract them
         const numberMatch = studentField.match(/\d+/);
         if (numberMatch) return numberMatch[0];
         

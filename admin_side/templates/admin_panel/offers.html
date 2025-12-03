@@ -290,7 +290,6 @@
         font-weight: 600;
     }
 </style>
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     const API_BASE = "http://127.0.0.1:8000";
@@ -371,6 +370,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 allApplications = Array.isArray(appsData) ? appsData : [];
             }
             
+            // Process offers to mark expired ones
+            processOfferStatuses();
             updateStats(allOffers, allApplications);
             displayOffers(allOffers);
             hideLoader();
@@ -383,10 +384,41 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
+    // Helper function to check if offer is expired based on deadline
+    function isOfferExpired(offer) {
+        const today = new Date();
+        const deadline = new Date(offer.deadline);
+        // Set both dates to midnight for accurate comparison
+        today.setHours(0, 0, 0, 0);
+        deadline.setHours(0, 0, 0, 0);
+        return deadline < today;
+    }
+
+    // Helper function to get days until deadline
+    function getDaysUntilDeadline(offer) {
+        const today = new Date();
+        const deadline = new Date(offer.deadline);
+        // Set both dates to midnight
+        today.setHours(0, 0, 0, 0);
+        deadline.setHours(0, 0, 0, 0);
+        return Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
+    }
+
+    // Process offer statuses (combine is_closed field with deadline check)
+    function processOfferStatuses() {
+        allOffers.forEach(offer => {
+            // Add computed property for actual status
+            offer.isActuallyClosed = offer.is_closed || isOfferExpired(offer);
+            offer.daysUntilDeadline = getDaysUntilDeadline(offer);
+            offer.isDeadlineApproaching = offer.daysUntilDeadline <= 3 && offer.daysUntilDeadline >= 0;
+            offer.isExpired = isOfferExpired(offer);
+        });
+    }
+
     function updateStats(offers, applications) {
         const total = offers.length;
-        const active = offers.filter(o => !o.is_closed).length;
-        const closed = offers.filter(o => o.is_closed).length;
+        const active = offers.filter(o => !o.isActuallyClosed).length;
+        const closed = offers.filter(o => o.isActuallyClosed).length;
         const totalApps = applications.length;
 
         document.getElementById('totalOffers').textContent = total;
@@ -410,22 +442,23 @@ document.addEventListener("DOMContentLoaded", function() {
                 app.offer?.id === offer.id
             ).length;
             
-            // Determine if deadline is approaching (within 3 days)
-            const today = new Date();
-            const deadline = new Date(offer.deadline);
-            const daysUntilDeadline = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
-            const isDeadlineApproaching = daysUntilDeadline <= 3 && daysUntilDeadline >= 0;
-            const isExpired = daysUntilDeadline < 0;
-            
             // Type badge
             const isInternship = offer.title?.toLowerCase().includes('intern') || 
                                offer.level_required?.toLowerCase().includes('intern');
             const typeClass = isInternship ? 'type-internship' : 'type-job';
             const typeText = isInternship ? 'Internship' : 'Job';
             
-            // Status badge
-            const statusClass = offer.is_closed || isExpired ? 'status-closed' : 'status-active';
-            const statusText = offer.is_closed ? 'Closed' : (isExpired ? 'Expired' : 'Active');
+            // Status badge - use the computed status
+            const statusClass = offer.isActuallyClosed ? 'status-closed' : 'status-active';
+            let statusText = 'Active';
+            
+            if (offer.is_closed) {
+                statusText = 'Manually Closed';
+            } else if (offer.isExpired) {
+                statusText = 'Expired';
+            } else if (offer.isActuallyClosed) {
+                statusText = 'Closed';
+            }
 
             // Create row
             const row = document.createElement("tr");
@@ -456,11 +489,14 @@ document.addEventListener("DOMContentLoaded", function() {
                     </div>
                 </td>
                 <td>
-                    <div class="${isDeadlineApproaching ? 'deadline-warning' : ''}">
+                    <div class="${offer.isDeadlineApproaching ? 'deadline-warning' : ''}">
                         ${new Date(offer.deadline).toLocaleDateString()}
                     </div>
-                    ${isDeadlineApproaching ? 
-                        `<small class="text-danger">${daysUntilDeadline} day${daysUntilDeadline !== 1 ? 's' : ''} left</small>` : 
+                    ${offer.isDeadlineApproaching ? 
+                        `<small class="text-danger">${offer.daysUntilDeadline} day${offer.daysUntilDeadline !== 1 ? 's' : ''} left</small>` : 
+                        ''}
+                    ${offer.isExpired ? 
+                        `<small class="text-danger">Expired</small>` : 
                         ''}
                 </td>
                 <td><span class="status-badge ${statusClass}">${statusText}</span></td>
@@ -493,7 +529,6 @@ document.addEventListener("DOMContentLoaded", function() {
         const searchTerm = document.getElementById('searchInput').value.toLowerCase();
         let filteredOffers = allOffers;
 
-        // Apply search filter
         if (searchTerm) {
             filteredOffers = filteredOffers.filter(offer => {
                 const title = offer.title?.toLowerCase() || '';
@@ -508,12 +543,13 @@ document.addEventListener("DOMContentLoaded", function() {
             });
         }
 
-        // Apply type filter
         if (filterType && filterType !== 'all') {
             if (filterType === 'active') {
-                filteredOffers = filteredOffers.filter(o => !o.is_closed);
+                // Show offers that are not manually closed AND not expired
+                filteredOffers = filteredOffers.filter(o => !o.isActuallyClosed);
             } else if (filterType === 'closed') {
-                filteredOffers = filteredOffers.filter(o => o.is_closed);
+                // Show offers that are either manually closed OR expired
+                filteredOffers = filteredOffers.filter(o => o.isActuallyClosed);
             } else if (filterType === 'internship') {
                 filteredOffers = filteredOffers.filter(o => 
                     o.title?.toLowerCase().includes('intern') || 
@@ -523,6 +559,16 @@ document.addEventListener("DOMContentLoaded", function() {
                 filteredOffers = filteredOffers.filter(o => 
                     !o.title?.toLowerCase().includes('intern') && 
                     !o.level_required?.toLowerCase().includes('intern')
+                );
+            } else if (filterType === 'expiring') {
+                // Show offers that expire within 3 days (not expired yet)
+                filteredOffers = filteredOffers.filter(o => 
+                    o.isDeadlineApproaching && !o.isActuallyClosed
+                );
+            } else if (filterType === 'expired') {
+                // Show only expired offers (not manually closed)
+                filteredOffers = filteredOffers.filter(o => 
+                    o.isExpired && !o.is_closed
                 );
             }
         }
@@ -534,18 +580,10 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
-    // Show offer details in modal
     function showOfferDetails(offer) {
         currentOfferId = offer.id;
         
-        // Get applications for this offer
         const applications = allApplications.filter(app => app.offer?.id === offer.id);
-        
-        // Determine deadline status
-        const today = new Date();
-        const deadline = new Date(offer.deadline);
-        const daysUntilDeadline = Math.ceil((deadline - today) / (1000 * 60 * 60 * 24));
-        const isExpired = daysUntilDeadline < 0;
         
         // Build modal content
         const modalContent = `
@@ -611,9 +649,12 @@ document.addEventListener("DOMContentLoaded", function() {
                             <div class="mb-2">
                                 <label class="form-label text-muted">Status</label>
                                 <div>
-                                    <span class="status-badge ${offer.is_closed || isExpired ? 'status-closed' : 'status-active'}">
-                                        ${offer.is_closed ? 'Closed' : (isExpired ? 'Expired' : 'Active')}
-                                    </span>
+                                    ${offer.is_closed ? 
+                                        `<span class="status-badge status-closed">Manually Closed</span>` :
+                                        offer.isExpired ?
+                                        `<span class="status-badge status-closed">Expired</span>` :
+                                        `<span class="status-badge status-active">Active</span>`
+                                    }
                                 </div>
                             </div>
                             <div class="mb-2">
@@ -622,12 +663,12 @@ document.addEventListener("DOMContentLoaded", function() {
                             </div>
                             <div class="mb-2">
                                 <label class="form-label text-muted">Deadline</label>
-                                <div class="fw-bold ${isExpired ? 'text-danger' : ''}">
+                                <div class="fw-bold ${offer.isExpired ? 'text-danger' : ''}">
                                     ${new Date(offer.deadline).toLocaleDateString()}
                                 </div>
-                                ${!isExpired ? 
-                                    `<small class="text-muted">${daysUntilDeadline} day${daysUntilDeadline !== 1 ? 's' : ''} remaining</small>` :
-                                    `<small class="text-danger">Expired</small>`}
+                                ${!offer.isExpired ? 
+                                    `<small class="text-muted">${offer.daysUntilDeadline} day${offer.daysUntilDeadline !== 1 ? 's' : ''} remaining</small>` :
+                                    `<small class="text-danger">Expired ${Math.abs(offer.daysUntilDeadline)} day${Math.abs(offer.daysUntilDeadline) !== 1 ? 's' : ''} ago</small>`}
                             </div>
                             <div class="mb-2">
                                 <label class="form-label text-muted">Created</label>
@@ -670,20 +711,20 @@ document.addEventListener("DOMContentLoaded", function() {
                             <table class="table table-sm">
                                 <thead>
                                     <tr>
+                                        <th>Application Id</th>
                                         <th>Student</th>
-                                        <th>University</th>
                                         <th>GPA</th>
-                                        <th>Applied Date</th>
+                                        <th>Application fit </th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     ${applications.slice(0, 5).map(app => `
                                         <tr>
-                                            <td>${app.student?.user?.first_name || ''} ${app.student?.user?.last_name || ''}</td>
-                                            <td>${app.student?.university?.name || 'N/A'}</td>
-                                            <td>${app.student?.gpa ? parseFloat(app.student.gpa).toFixed(2) : 'N/A'}</td>
-                                            <td>${app.applied_at ? new Date(app.applied_at).toLocaleDateString() : 'N/A'}</td>
+                                            <td>${app.id? app.id : 'N/A'}</td>
+                                            <td>${app.user?.email || ''} ${app.user?.email || ''}</td>
+                                            <td>${app.user?.gpa ? parseFloat(app.user.gpa).toFixed(2) : 'N/A'}</td>
+                                            <td>${app.predicted_fit? app.predicted_fit : 'N/A'}</td>
                                             <td>
                                                 <span class="badge ${app.status === 'accepted' ? 'bg-success' : 
                                                                     app.status === 'rejected' ? 'bg-danger' : 
@@ -704,31 +745,36 @@ document.addEventListener("DOMContentLoaded", function() {
             ` : ''}
         `;
         
-        // Update modal content
         document.getElementById('modalBody').innerHTML = modalContent;
-        
-        // Update modal title
         document.getElementById('offerModalLabel').textContent = offer.title || 'Offer Details';
         
-        // Update toggle button text
         const toggleBtn = document.getElementById('toggleStatusBtn');
-        if (offer.is_closed || isExpired) {
-            toggleBtn.innerHTML = '<i class="bi bi-toggle-off me-1"></i> Reopen Offer';
-            toggleBtn.className = 'btn btn-success';
+        // Only show toggle button if offer is not expired (can't reopen expired offers)
+        if (offer.isExpired) {
+            toggleBtn.style.display = 'none';
         } else {
-            toggleBtn.innerHTML = '<i class="bi bi-toggle-on me-1"></i> Close Offer';
-            toggleBtn.className = 'btn btn-danger';
+            toggleBtn.style.display = 'inline-block';
+            if (offer.is_closed) {
+                toggleBtn.innerHTML = '<i class="bi bi-toggle-off me-1"></i> Reopen Offer';
+                toggleBtn.className = 'btn btn-success';
+            } else {
+                toggleBtn.innerHTML = '<i class="bi bi-toggle-on me-1"></i> Close Offer';
+                toggleBtn.className = 'btn btn-danger';
+            }
         }
         
-        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('offerModal'));
         modal.show();
     }
 
-    // Toggle offer status
     async function toggleOfferStatus(offerId) {
         const offer = allOffers.find(o => o.id == offerId);
         if (!offer) return;
+        
+        if (offer.isExpired) {
+            showToast("Cannot toggle status of expired offers", 'warning');
+            return;
+        }
         
         const newStatus = !offer.is_closed;
         const action = newStatus ? 'close' : 'reopen';
@@ -738,7 +784,6 @@ document.addEventListener("DOMContentLoaded", function() {
         }
         
         try {
-            // Note: You need to implement this endpoint in your backend
             const response = await fetch(`${API_BASE}/api/offers/${offerId}/toggle-status/`, {
                 method: "POST",
                 headers: {
@@ -749,10 +794,12 @@ document.addEventListener("DOMContentLoaded", function() {
             });
             
             if (response.ok) {
-                // Update local data
+                // Update the offer status
                 offer.is_closed = newStatus;
+                // Recalculate actual closed status
+                offer.isActuallyClosed = offer.is_closed || offer.isExpired;
                 
-                // Update the table
+                // Refresh display
                 displayOffers(allOffers);
                 updateStats(allOffers, allApplications);
                 
@@ -791,19 +838,15 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById('loader').style.display = 'none';
     }
 
-    // Toast notification function
     function showToast(message, type = 'info') {
-        // Remove existing toast if any
         const existingToast = document.querySelector('.toast-container');
         if (existingToast) {
             existingToast.remove();
         }
         
-        // Create toast container
         const toastContainer = document.createElement('div');
         toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
         
-        // Create toast
         const toast = document.createElement('div');
         toast.className = `toast align-items-center text-bg-${type} border-0`;
         toast.setAttribute('role', 'alert');
@@ -822,14 +865,12 @@ document.addEventListener("DOMContentLoaded", function() {
         toastContainer.appendChild(toast);
         document.body.appendChild(toastContainer);
         
-        // Show toast
         const bsToast = new bootstrap.Toast(toast, {
             autohide: true,
             delay: 3000
         });
         bsToast.show();
         
-        // Remove toast after it hides
         toast.addEventListener('hidden.bs.toast', function() {
             toastContainer.remove();
         });
