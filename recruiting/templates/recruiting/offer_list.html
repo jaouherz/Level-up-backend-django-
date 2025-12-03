@@ -307,6 +307,80 @@
             default: return 'Unknown';
         }
     }
+    document.addEventListener("DOMContentLoaded", function () {
+    const socket = new WebSocket("ws://127.0.0.1:8000/ws/offers/");
+
+    socket.onopen = function () {
+        console.log("✅ WebSocket connected (Offers Feed)");
+    };
+
+    socket.onmessage = function (event) {
+        const data = JSON.parse(event.data);
+
+        if (data.type === "new_offer") {
+            console.log("🔥 New offer received:", data.offer);
+            addNewOfferToUI(data.offer);
+        }
+    };
+
+    socket.onerror = function (error) {
+        console.log("❌ WebSocket error:", error);
+    };
+});
+    function addNewOfferToUI(offer) {
+    const container = document.getElementById("offersContainer");
+    const emptyState = document.getElementById("emptyState");
+
+    // If empty state is visible, hide it
+    emptyState.classList.add("d-none");
+
+    // Build the new card
+    const card = document.createElement("div");
+    card.className = "col-lg-6 mb-4";
+
+    card.innerHTML = `
+        <div class="card offer-card h-100">
+            <div class="card-body position-relative">
+                <span class="badge bg-success offer-status-badge">Active</span>
+
+                <div class="d-flex align-items-start mb-3">
+                    <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-3"
+                         style="width: 50px; height: 50px;">
+                        <i class="bi bi-briefcase text-white"></i>
+                    </div>
+                    <div>
+                        <h5 class="card-title mb-1">${offer.title}</h5>
+                        <p class="text-muted mb-0">${offer.company}</p>
+                    </div>
+                </div>
+
+                <p class="text-muted mb-2"><i class="bi bi-tags me-1"></i> Field: ${offer.field_required ?? "Unknown"}</p>
+                <p class="text-muted mb-2"><i class="bi bi-geo-alt me-1"></i> Location: Not specified</p>
+
+                <div class="d-grid gap-2">
+                    <a href="/recruiting/offers/${offer.id}/"
+                       class="btn btn-outline-primary btn-sm">
+                       <i class="bi bi-eye me-1"></i> View Details
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Add to top
+    container.prepend(card);
+
+    // Update stats
+    updateStats();
+}
+    function updateStats() {
+    const cards = document.querySelectorAll("#offersContainer .offer-card");
+
+    document.getElementById("totalOffers").textContent = cards.length;
+
+    const active = document.querySelectorAll(".offer-status-badge.bg-success").length;
+    document.getElementById("activeOffers").textContent = active;
+}
 </script>
 
 {% endblock %}
