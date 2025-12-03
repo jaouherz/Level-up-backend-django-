@@ -1,5 +1,7 @@
 from datetime import date, datetime
 
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.contrib import messages
 from django.shortcuts import redirect, render
 from django.utils import timezone
@@ -394,7 +396,7 @@ class FeedbackViewSet(viewsets.ModelViewSet):
     queryset = Feedback.objects.select_related('application', 'recruiter').all()
     serializer_class = FeedbackSerializer
     permission_classes = [IsAuthenticated]  
-
+0
 
 class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.prefetch_related('required_skills').all()
@@ -436,7 +438,18 @@ class OfferViewSet(viewsets.ModelViewSet):
             skills.append(skill)
 
         offer.required_skills.set(skills)
-
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "offers",
+            {
+                "type": "send_new_offer",
+                "offer": {
+                    "id": offer.id,
+                    "title": offer.title,
+                    "company": profile.company.name,
+                }
+            }
+        )
         return Response({
             "message": "Offer created",
             "id": offer.id,

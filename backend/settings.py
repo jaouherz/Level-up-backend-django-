@@ -47,10 +47,21 @@ INSTALLED_APPS = [
     'recruiting',
     'drf_yasg',
     'admin_side',
+    'channels',
 
 ]
 STATIC_URL = '/static/'
+ASGI_APPLICATION = "backend.asgi.application"
 
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)]
+        },
+    },
+}
 # Where Django will put collected static files
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
